@@ -1,0 +1,169 @@
+[
+  {
+    "id": "T01-Q01",
+    "tier": 1,
+    "question": "کدام یک از این حیوانات معمولاً به عنوان حیوان خانگی نگهداری می‌شود؟",
+    "answers": [
+      { "label": "A", "text": "سگ", "correct": true },
+      { "label": "B", "text": "کوسه", "correct": false },
+      { "label": "C", "text": "عقاب", "correct": false },
+      { "label": "D", "text": "تمساح", "correct": false }
+    ]
+  },
+  {
+    "id": "T01-Q02",
+    "tier": 1,
+    "question": "در یک روز صاف و آفتابی، آسمان چه رنگی است؟",
+    "answers": [
+      { "label": "A", "text": "آبی", "correct": true },
+      { "label": "B", "text": "بنفش", "correct": false },
+      { "label": "C", "text": "نارنجی", "correct": false },
+      { "label": "D", "text": "قهوه‌ای", "correct": false }
+    ]
+  },
+  {
+    "id": "T01-Q03",
+    "tier": 1,
+    "question": "کدام یک از این‌ها یک غذای رایج برای صبحانه است؟",
+    "answers": [
+      { "label": "A", "text": "غلات صبحانه", "correct": true },
+      { "label": "B", "text": "روغن موتور", "correct": false },
+      { "label": "C", "text": "شن", "correct": false },
+      { "label": "D", "text": "گچ", "correct": false }
+    ]
+  },
+  {
+    "id": "T01-Q04",
+    "tier": 1,
+    "question": "از کدام یک از این‌ها برای تماس گرفتن با کسی استفاده می‌شود؟",
+    "answers": [
+      { "label": "A", "text": "گوشی هوشمند", "correct": true },
+      { "label": "B", "text": "توستر", "correct": false },
+      { "label": "C", "text": "مایکروویو", "correct": false },
+      { "label": "D", "text": "جاروبرقی", "correct": false }
+    ]
+  },
+  {
+    "id": "T01-Q05",
+    "tier": 1,
+    "question": "کدام یک از این‌ها نوشیدنی گرم رایجی است که اغلب صبح‌ها سرو می‌شود؟",
+    "answers": [
+      { "label": "A", "text": "قهوه", "correct": true },
+      { "label": "B", "text": "کچاپ", "correct": false },
+      { "label": "C", "text": "شامپو", "correct": false },
+      { "label": "D", "text": "چسب", "correct": false }
+    ]
+  },
+  {
+    "id": "T01-Q06",
+    "tier": 1,
+    "question": "کدام یک از این‌ها معمولاً روی پا پوشیده می‌شود؟",
+    "answers": [
+      { "label": "A", "text": "کفش", "correct": true },
+      { "label": "B", "text": "دستکش", "correct": false },
+      { "label": "C", "text": "کلاه", "correct": false },
+      { "label": "D", "text": "شال گردن", "correct": false }
+    ]
+  },
+
+  {
+    "id": "T02-Q01",
+    "tier": 2,
+    "question": "در سال کبیسه کدام ماه یک روز اضافه دارد؟",
+    "answers": [
+      { "label": "A", "text": "فوریه", "correct": true },
+      { "label": "B", "text": "ژوئن", "correct": false },
+      { "label": "C", "text": "سپتامبر", "correct": false },
+      { "label": "D", "text": "نوامبر", "correct": false }
+    ]
+  },
+  {
+    "id": "T02-Q02",
+    "tier": 2,
+    "question": "کدام یک از این‌ها یک رنگ اصلی نور است؟",
+    "answers": [
+      { "label": "A", "text": "قرمز", "correct": true },
+      { "label": "B", "text": "فیروزه‌ای", "correct": false },
+      { "label": "C", "text": "سرخابی", "correct": false },
+      { "label": "D", "text": "زرد-سبز", "correct": false }
+    ]
+  },
+  {
+    "id": "T02-Q03",
+    "tier": 2,
+    "question": "کشور فرانسه در کدام قاره قرار دارد؟",
+    "answers": [
+      { "label": "A", "text": "اروپا", "correct": true },
+      { "label": "B", "text": "آسیا", "correct": false },
+      { "label": "C", "text": "آفریقا", "correct": false },
+      { "label": "D", "text": "آمریکای جنوبی", "correct": false }
+    ]
+  },
+  {
+    "id": "T02-Q04",
+    "tier": 2,
+    "question": "کدام یک از این‌ها یک ساز زهی است؟",
+    "answers": [
+      { "label": "A", "text": "ویولن", "correct": true },
+      { "label": "B", "text": "ترومپت", "correct": false },
+      { "label": "C", "text": "ترومبون", "correct": false },
+      { "label": "D", "text": "توبا", "correct": false }
+    ]
+  },
+  {
+    "id": "T02-Q05",
+    "tier": 2,
+    "question": "کدام یک از این‌ها یک مرورگر وب رایج است؟",
+    "answers": [
+      { "label": "A", "text": "گوگل کروم", "correct": true },
+      { "label": "B", "text": "ادوبی پینتر", "correct": false },
+      { "label": "C", "text": "فایل زیلا", "correct": false },
+      { "label": "D", "text": "وی‌ال‌سی پلیر", "correct": false }
+    ]
+  },
+  {
+    "id": "T02-Q06",
+    "tier": 2,
+    "question": "کدام یک از این‌ها واحد زمان است؟",
+    "answers": [
+      { "label": "A", "text": "دقیقه", "correct": true },
+      { "label": "B", "text": "لیتر", "correct": false },
+      { "label": "C", "text": "گرم", "correct": false },
+      { "label": "D", "text": "متر", "correct": false }
+    ]
+  },
+
+  {
+    "id": "T03-Q01",
+    "tier": 3,
+    "question": "پایتخت کانادا کدام شهر است؟",
+    "answers": [
+      { "label": "A", "text": "اتاوا", "correct": true },
+      { "label": "B", "text": "تورنتو", "correct": false },
+      { "label": "C", "text": "ونکوور", "correct": false },
+      { "label": "D", "text": "مونترال", "correct": false }
+    ]
+  },
+  {
+    "id": "T03-Q02",
+    "tier": 3,
+    "question": "کدام سیاره به «سیاره سرخ» معروف است؟",
+    "answers": [
+      { "label": "A", "text": "مریخ", "correct": true },
+      { "label": "B", "text": "زهره", "correct": false },
+      { "label": "C", "text": "مشتری", "correct": false },
+      { "label": "D", "text": "عطارد", "correct": false }
+    ]
+  },
+  {
+    "id": "T03-Q03",
+    "tier": 3,
+    "question": "کدام یک از این‌ها نقاشی معروف لئوناردو داوینچی است؟",
+    "answers": [
+      { "label": "A", "text": "مونالیزا", "correct": true },
+      { "label": "B", "text": "شب پرستاره", "correct": false },
+      { "label": "C", "text": "جیغ", "correct": false },
+      { "label": "D", "text": "دختری با گوشواره مروارید", "correct": false }
+    ]
+  }
+]
