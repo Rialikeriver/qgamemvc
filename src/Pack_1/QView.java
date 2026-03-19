@@ -7,8 +7,7 @@ import javafx.scene.layout.*;
 import java.util.*;
 
 public class QView extends BorderPane {
-    protected Label questionLabel;
-    // Added entanglementBtn here
+    protected Label questionLabel, timerLabel;
     protected Button btnA, btnB, btnC, btnD, superpositionBtn, entanglementBtn, menuDiamond;
     protected VBox moneyLadder;
     
@@ -19,39 +18,27 @@ public class QView extends BorderPane {
         try {
             var resource = getClass().getResource("/WWTB_A_Millionaire_Background.png");
             if (resource != null) {
-                String bgPath = resource.toExternalForm();
-                this.setStyle(
-                    "-fx-background-image: url('" + bgPath + "'); " +
-                    "-fx-background-size: cover; " +
-                    "-fx-background-position: center; " +
-                    "-fx-background-repeat: no-repeat;"
-                );
+                this.setStyle("-fx-background-image: url('" + resource.toExternalForm() + "'); " +
+                              "-fx-background-size: cover; -fx-background-position: center;");
             } else {
                 this.setStyle("-fx-background-color: #000022;");
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        } catch (Exception e) { e.printStackTrace(); }
 
         initUI();
     }
 
-    public void disableAnswers(List<Answer> toDisable) {
-        for (Answer a : toDisable) {
-            String label = a.getLabel().toUpperCase(); 
-            
-            if (label.equals("A")) { getBtnA().setDisable(true); getBtnA().setOpacity(0.3); }
-            else if (label.equals("B")) { getBtnB().setDisable(true); getBtnB().setOpacity(0.3); }
-            else if (label.equals("C")) { getBtnC().setDisable(true); getBtnC().setOpacity(0.3); }
-            else if (label.equals("D")) { getBtnD().setDisable(true); getBtnD().setOpacity(0.3); }
-        }
-    }
-    
     private void initUI() {
+        // Menu and Timer Row
         menuDiamond = new Button();
         menuDiamond.getStyleClass().add("menu-diamond");
-        StackPane topPane = new StackPane(menuDiamond);
-        topPane.setAlignment(Pos.TOP_RIGHT);
+        
+        timerLabel = new Label("20s");
+        timerLabel.setStyle("-fx-font-size: 40px; -fx-text-fill: #d4af37; -fx-font-weight: bold;");
+        
+        StackPane topPane = new StackPane(timerLabel, menuDiamond);
+        StackPane.setAlignment(timerLabel, Pos.TOP_LEFT);
+        StackPane.setAlignment(menuDiamond, Pos.TOP_RIGHT);
         this.setTop(topPane);
 
         moneyLadder = createLadder();
@@ -60,7 +47,6 @@ public class QView extends BorderPane {
         
         VBox centerBox = new VBox(30);
         centerBox.setAlignment(Pos.CENTER);
-        centerBox.setStyle("-fx-background-color: transparent;");
 
         questionLabel = new Label("Loading...");
         questionLabel.getStyleClass().add("question-box");
@@ -70,7 +56,6 @@ public class QView extends BorderPane {
         GridPane grid = new GridPane();
         grid.setHgap(20); grid.setVgap(15);
         grid.setAlignment(Pos.CENTER);
-        grid.setStyle("-fx-background-color: transparent;");
 
         btnA = createAnswerButton("A");
         btnB = createAnswerButton("B");
@@ -80,17 +65,11 @@ public class QView extends BorderPane {
         grid.add(btnA, 0, 0); grid.add(btnB, 1, 0);
         grid.add(btnC, 0, 1); grid.add(btnD, 1, 1);
 
-        // Setup Superposition Button
         superpositionBtn = new Button("SUPERPOSITION");
         superpositionBtn.getStyleClass().add("answer-btn");
-        superpositionBtn.setPrefWidth(200);
-
-        // Setup Entanglement Button
         entanglementBtn = new Button("ENTANGLEMENT");
         entanglementBtn.getStyleClass().add("answer-btn");
-        entanglementBtn.setPrefWidth(200);
 
-        // Put the lifelines in an HBox so they sit side-by-side
         HBox lifelineBox = new HBox(20, superpositionBtn, entanglementBtn);
         lifelineBox.setAlignment(Pos.CENTER);
 
@@ -110,7 +89,6 @@ public class QView extends BorderPane {
         ladder.getStyleClass().add("ladder-container");
         List<String> levels = new ArrayList<>(Arrays.asList(QModel.LADDER_VALUES));
         Collections.reverse(levels);
-
         for (String s : levels) {
             Label l = new Label(s);
             l.getStyleClass().add("ladder-cell");
@@ -120,66 +98,56 @@ public class QView extends BorderPane {
         return ladder;
     }
 
-    public void updateLadderHighlight(int currentIndex) {
-        int total = moneyLadder.getChildren().size();
-        int target = total - 1 - currentIndex; 
-
-        for (int i = 0; i < total; i++) {
-            Node n = moneyLadder.getChildren().get(i);
-            n.setId(i == target ? "current-level" : "");
-        }
-    }
     public void updateQuestion(String text, List<Answer> answers) {
         questionLabel.setText(text);
-        
-        // Clear old text first to be safe
         btnA.setText(""); btnB.setText(""); btnC.setText(""); btnD.setText("");
-
         if (answers != null) {
             for (Answer a : answers) {
                 String label = a.getLabel().toUpperCase();
-                String displayText = label + ": " + a.getText();
-                
-                // This places the answer on the button matching its NEW label
-                switch (label) {
-                    case "A": btnA.setText(displayText); break;
-                    case "B": btnB.setText(displayText); break;
-                    case "C": btnC.setText(displayText); break;
-                    case "D": btnD.setText(displayText); break;
-                }
+                String display = label + ": " + a.getText();
+                if (label.equals("A")) btnA.setText(display);
+                else if (label.equals("B")) btnB.setText(display);
+                else if (label.equals("C")) btnC.setText(display);
+                else if (label.equals("D")) btnD.setText(display);
             }
         }
     }
 
-    public void highlightQuantumState(List<Answer> remaining) {
-        Button[] btns = {btnA, btnB, btnC, btnD};
-        for (Button b : btns) {
-            boolean match = remaining.stream().anyMatch(a -> b.getText().contains(a.getText()));
-            if (!match) b.setVisible(false);
+    public void updateLadderHighlight(int currentIndex) {
+        int total = moneyLadder.getChildren().size();
+        int target = total - 1 - currentIndex; 
+        for (int i = 0; i < total; i++) {
+            moneyLadder.getChildren().get(i).setId(i == target ? "current-level" : "");
         }
     }
 
     public void resetButtons() {
-        getBtnA().setDisable(false); getBtnA().setOpacity(1.0);
-        getBtnB().setDisable(false); getBtnB().setOpacity(1.0);
-        getBtnC().setDisable(false); getBtnC().setOpacity(1.0);
-        getBtnD().setDisable(false); getBtnD().setOpacity(1.0);
+        Button[] btns = {btnA, btnB, btnC, btnD};
+        for (Button b : btns) { b.setDisable(false); b.setOpacity(1.0); }
+    }
+
+    public void disableAnswers(List<Answer> toDisable) {
+        for (Answer a : toDisable) {
+            String label = a.getLabel().toUpperCase();
+            if (label.equals("A")) { btnA.setDisable(true); btnA.setOpacity(0.3); }
+            else if (label.equals("B")) { btnB.setDisable(true); btnB.setOpacity(0.3); }
+            else if (label.equals("C")) { btnC.setDisable(true); btnC.setOpacity(0.3); }
+            else if (label.equals("D")) { btnD.setDisable(true); btnD.setOpacity(0.3); }
+        }
     }
 
     public void applyTheme(String themeClass) {
         this.getStyleClass().removeAll("theme-deuteranopia", "theme-tritanopia", "modern-style", "classic-style");
-        if (themeClass != null && !themeClass.isEmpty()) {
-            this.getStyleClass().add(themeClass);
-        }
+        if (themeClass != null && !themeClass.isEmpty()) this.getStyleClass().add(themeClass);
     }
 
-    // --- Getters ---
     public Button getBtnA() { return btnA; }
     public Button getBtnB() { return btnB; }
     public Button getBtnC() { return btnC; }
     public Button getBtnD() { return btnD; }
     public Button getSuperpositionBtn() { return superpositionBtn; }
-    // ADDED GETTER FOR ENTANGLEMENT
     public Button getEntanglementBtn() { return entanglementBtn; }
     public Button getMenuDiamond() { return menuDiamond; }
+    public Label getTimerLabel() { return timerLabel; }
+    public Label getQuestionLabel() { return questionLabel; }
 }

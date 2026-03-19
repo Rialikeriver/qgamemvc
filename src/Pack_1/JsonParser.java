@@ -10,7 +10,6 @@ public class JsonParser {
 
     public static List<Question> loadQuestions(String filename) {
         try {
-            // This looks for the file in your 'resources' or 'assets' folder
             InputStream is = JsonParser.class.getResourceAsStream("/" + filename);
             if (is == null) {
                 System.err.println("Could not find file: " + filename);
