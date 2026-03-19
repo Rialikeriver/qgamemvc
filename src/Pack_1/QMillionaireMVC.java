@@ -11,9 +11,19 @@ import javafx.scene.layout.VBox;
 import java.util.List;
 
 public class QMillionaireMVC extends Application {
-    
+	private Pack_1.profile.UserManager userManager;
+	private Pack_1.profile.Session session;
+	private ProfileController profileController;
+
     @Override
     public void start(Stage primaryStage) {
+    	userManager = new Pack_1.profile.UserManager(
+    	        new Pack_1.profile.JsonUserStore(),
+    	        new Pack_1.profile.JsonStatsStore()
+    	);
+    	session = new Pack_1.profile.Session();
+    	profileController = new ProfileController(userManager);
+    	
         QSplash splash = new QSplash(() -> {
             VBox modeBox = new VBox(40);
             modeBox.setAlignment(Pos.CENTER);
@@ -40,7 +50,7 @@ public class QMillionaireMVC extends Application {
             primaryStage.setScene(modeScene);
             
             adminBtn.setOnAction(e -> showAdminScreen(primaryStage));
-            userBtn.setOnAction(e -> showGameScreen(primaryStage));
+            userBtn.setOnAction(e -> showPlayerMenu(primaryStage));
             
             primaryStage.show();
         });
@@ -57,12 +67,29 @@ public class QMillionaireMVC extends Application {
         primaryStage.setTitle("Quantum Millionaire - Admin Panel");
         primaryStage.setScene(adminScene);
     }
-    
+
     private void showGameScreen(Stage primaryStage) {
+    	// You may later use session.getCurrentUser() to restore progress
         List<Question> questions = QuestionLoader.loadQuestions();
         QModel gameModel = new QModel(questions);
+
+        // Restore progress if a user is logged in
+        if (session.hasUser()) {
+            Pack_1.profile.User u = session.getCurrentUser();
+            
+            gameModel.resetGame();			// 0's out.
+            // currentTier == how many questions they’ve cleared
+            for (int i = 0; i < u.getCurrentTier(); i++) {
+                gameModel.nextQuestion();
+            }
+            
+            // Set lifelines based on their use state
+            gameModel.setSuperpositionUsed(u.isSuperpositionUsed());
+            gameModel.setEntanglementUsed(u.isEntanglementUsed());
+            //gameModel.setThirdLifeLineUsed(u.isThirdLifeLineUsed());
+        }
         QView gameView = new QView();
-        new QController(gameModel, gameView);  
+        new QController(gameModel, gameView, session, userManager);
         
         Scene gameScene = new Scene(gameView, 1280, 720);
         addCSS(gameScene);
@@ -70,6 +97,53 @@ public class QMillionaireMVC extends Application {
         primaryStage.setScene(gameScene);
     }
     
+    private void showPlayerMenu(Stage primaryStage) {
+        PlayerMenuView view = new PlayerMenuView();
+
+        view.getNewGameBtn().setOnAction(e -> showNewProfileScreen(primaryStage));
+        view.getLoadGameBtn().setOnAction(e -> showLoadProfileScreen(primaryStage));
+        view.getQuitBtn().setOnAction(e -> primaryStage.close());
+
+        Scene scene = new Scene(view, 1280, 720);
+        addCSS(scene);
+        primaryStage.setScene(scene);
+    }
+
+    private void showNewProfileScreen(Stage primaryStage) {
+        NewProfileView view = new NewProfileView();
+
+        profileController.wireNewProfileScreen(
+                view,
+                user -> {
+                    session.setCurrentUser(user);
+                    showGameScreen(primaryStage);
+                },
+                () -> showPlayerMenu(primaryStage)
+        );
+
+        Scene scene = new Scene(view, 1280, 720);
+        addCSS(scene);
+        primaryStage.setScene(scene);
+    }
+
+    private void showLoadProfileScreen(Stage primaryStage) {
+        ProfileSelectionView view = new ProfileSelectionView();
+
+        profileController.wireProfileSelectionScreen(
+                view,
+                user -> {
+                    session.setCurrentUser(user);
+                    showGameScreen(primaryStage);
+                },
+                () -> showPlayerMenu(primaryStage),
+                () -> showNewProfileScreen(primaryStage)
+        );
+
+        Scene scene = new Scene(view, 1280, 720);
+        addCSS(scene);
+        primaryStage.setScene(scene);
+    }
+
     private void addCSS(Scene scene) {
         try {
             String cssPath = getClass().getResource("/Pack_1/style.css").toExternalForm();

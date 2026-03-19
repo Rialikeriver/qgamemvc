@@ -6,13 +6,25 @@ import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.geometry.Side;
 import javafx.geometry.NodeOrientation;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.ButtonType;
+import java.util.Optional;
+
 public class QController {
     private QModel model;
     private QView view;
+    private Pack_1.profile.Session session;
+    private Pack_1.profile.UserManager userManager;
 
-    public QController(QModel model, QView view) {
-        this.model = model;
-        this.view = view;
+
+    public QController(QModel model, QView view,
+            Pack_1.profile.Session session,
+            Pack_1.profile.UserManager userManager) {
+    			this.model = model;
+    			this.view = view;
+    			this.session = session;
+    			this.userManager = userManager;
         attachEvents();
         updateDisplay();
     }
@@ -27,11 +39,21 @@ public class QController {
         view.getEntanglementBtn().setOnAction(e -> handleEntanglement());
     }
         // New Handler
-        private void handleEntanglement() {
+        private void handleEntanglement() {			// Ria, should this be moved you think?
             model.applyEntanglement();
             System.out.println("Quantum Entanglement Active: One wrong answer is now linked to reality.");
             view.getEntanglementBtn().setDisable(true);
-        
+            model.setEntanglementUsed(true);
+            
+            if (session.hasUser()) {				// Tracking Lifeline Usage in User
+            	userManager.updateUserProgress(
+                	session.getCurrentUser(),
+                	model.getCurrentQuestionIndex(),
+                	model.isSuperpositionUsed(),
+                	model.isEntanglementUsed(),
+                	model.getCurrentCashMoney()
+                );
+            }
     }
 
     private void showSettingsMenu() {
@@ -106,10 +128,28 @@ public class QController {
 
         if (isTechnicallyCorrect || isQuantumEntangled) {
             if (isQuantumEntangled) System.out.println("Entanglement Success!");
+            
             model.nextQuestion();
-            updateDisplay();
+            
+            if (session.hasUser()) {					// Save Progress. Mid-game persistence.
+            	userManager.updateUserProgress(
+            		session.getCurrentUser(),
+            		model.getCurrentQuestionIndex(),
+            		model.isSuperpositionUsed(),
+            		model.isEntanglementUsed(),
+            		model.getCurrentCashMoney()
+            	);
+            }
+            if (model.isGameOver()) {
+            	updateDisplay();
+            	handleGameOver();						// Gameover concept added
+            } else {
+                updateDisplay();
+            }
         } else {
             System.out.println("Wavefunction Collapsed - Game Over.");
+            model.handleWrongAnswer();
+            handleGameOver();
         }
     }
 
@@ -119,6 +159,17 @@ public class QController {
             view.disableAnswers(toDisable); 
             // Optional: disable the lifeline button so it can't be used twice
             view.getSuperpositionBtn().setDisable(true);
+            model.setSuperpositionUsed(true);	// tracks usage in game.
+
+            if (session.hasUser()) {		// Tracking Lifeline Usage in User
+            	userManager.updateUserProgress(
+                	session.getCurrentUser(),
+                	model.getCurrentQuestionIndex(),
+                	model.isSuperpositionUsed(),
+                	model.isEntanglementUsed(),
+                	model.getCurrentCashMoney()
+                );
+            }
         }
     }
 
@@ -130,8 +181,42 @@ public class QController {
             view.resetButtons();
             
             // Re-enable lifelines for the new question
-            view.getSuperpositionBtn().setDisable(false);
-            view.getEntanglementBtn().setDisable(false); 
+            view.getSuperpositionBtn().setDisable(model.isSuperpositionUsed());	// Aligned to model state.
+            view.getEntanglementBtn().setDisable(model.isEntanglementUsed());
         }
     }
+    
+    private void handleGameOver() {
+        if (session.hasUser()) {
+            // Ensure final result is recorded (idempotent if already called)
+            userManager.recordGameResult(session.getCurrentUser(), model);
+        }
+
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Game Over");
+
+        if (model.isPlayerWon()) {
+            alert.setHeaderText("You Won!");
+        } else {
+            alert.setHeaderText("Game Over");
+        }
+
+        alert.setContentText("You earned: $" + model.getMoneyEarned());
+
+        ButtonType playAgain = new ButtonType("Play Again");
+        ButtonType quit = new ButtonType("Quit");
+
+        alert.getButtonTypes().setAll(playAgain, quit);
+
+        Optional<ButtonType> result = alert.showAndWait();
+        if (result.isPresent() && result.get() == playAgain) {
+            model.resetGame();
+            updateDisplay();
+        } else {
+            // TODO: navigate back to main menu via QMillionaireMVC
+            // For now, you can just close the window or leave as-is.
+        }
+    }
+
+
 }

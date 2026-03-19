@@ -4,6 +4,19 @@
     -fx-background-color: #000022; /* Fallback dark blue */
 }
 
+/* --- USER PROFILE --- */
+.profile-card {
+    -fx-background-color: rgba(43,16,85,0.8);
+    -fx-border-color: #d4af37;
+    -fx-border-width: 2;
+    -fx-background-radius: 10;
+}
+
+.profile-card:hover {
+    -fx-background-color: rgba(230,126,34,0.8);
+    -fx-cursor: hand;
+}
+
 /* --- LADDER --- */
 .ladder-container {
     -fx-background-color: rgba(0,0,0,0.6);
