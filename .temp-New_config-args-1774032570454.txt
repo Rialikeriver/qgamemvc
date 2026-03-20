@@ -1,0 +1,16 @@
+--module-path
+"C:\\Eclipse\\plugins\\javafx-sdk-25.0.1\\lib"
+--add-modules
+javafx.controls,javafx.fxml,javafx.media,javafx.graphics,javafx.web,javafx.swing
+--enable-native-access=javafx.graphics
+--enable-native-access=javafx.media
+--enable-native-access=javafx.web
+--enable-native-access=javafx.swing
+-Dfile.encoding=UTF-8
+-Dstdout.encoding=UTF-8
+-Dstderr.encoding=UTF-8
+-p
+/Users/ria/Desktop/javafx-sdk-25.0.2/lib/javafx-swt.jar:/Users/ria/Desktop/javafx-sdk-25.0.2/lib/javafx.base.jar:/Users/ria/Desktop/javafx-sdk-25.0.2/lib/javafx.controls.jar:/Users/ria/Desktop/javafx-sdk-25.0.2/lib/javafx.fxml.jar:/Users/ria/Desktop/javafx-sdk-25.0.2/lib/javafx.graphics.jar:/Users/ria/Desktop/javafx-sdk-25.0.2/lib/javafx.media.jar:/Users/ria/Desktop/javafx-sdk-25.0.2/lib/javafx.swing.jar:/Users/ria/Desktop/javafx-sdk-25.0.2/lib/javafx.web.jar:/Users/ria/Desktop/javafx-sdk-25.0.2/lib/jdk.jsobject.jar:/Users/ria/Desktop/javafx-sdk-25.0.2/lib/jfx.incubator.input.jar:/Users/ria/Desktop/javafx-sdk-25.0.2/lib/jfx.incubator.richtext.jar
+-classpath
+/Users/ria/Desktop/qgamemvc/bin:/Users/ria/Desktop/Jackson2.17/jackson-annotations-2.17.0.jar:/Users/ria/Desktop/Jackson2.17/jackson-core-2.17.0.jar:/Users/ria/Desktop/Jackson2.17/jackson-databind-2.17.0.jar:/Users/ria/Desktop/Jackson2.17/jackson-datatype-jsr310-2.17.0.jar
+Pack_1.QMillionaireMVC

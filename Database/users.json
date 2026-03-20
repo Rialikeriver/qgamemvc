@@ -1,0 +1,16 @@
+[ {
+  "username" : "Ria",
+  "passwordHash" : "b2fa1e2b94e2f5e1a0e5ed847740cb9e07ab1bfb9e3420f63f9e7270974a1d8d",
+  "currentTier" : 0,
+  "highestTierReached" : 7,
+  "lastPlayed" : [ 2026, 3, 20, 15, 6, 16, 598890000 ],
+  "totalMoneyEarned" : 4500,
+  "lastGameMoney" : 0,
+  "gamesWon" : 0,
+  "gamesLost" : 5,
+  "lifelinesUsed" : 0,
+  "superpositionUsed" : false,
+  "entanglementUsed" : false,
+  "interferenceUsed" : false,
+  "totalLifelinesUsed" : 5
+} ]
