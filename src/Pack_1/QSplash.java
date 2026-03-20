@@ -32,7 +32,7 @@ public class QSplash extends Stage {
         this.initStyle(StageStyle.UNDECORATED);
 
         // Title label
-        Label title = new Label("RIA'S QUANTUM MILLIONAIRE");
+        Label title = new Label("Who wnats to be a millionaire - Ria and Taylor");
         title.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #d4af37;");
 
         // Loading message
