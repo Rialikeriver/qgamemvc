@@ -5,18 +5,37 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Represents a single multiple‑choice question in Quantum Millionaire.
+ * Each question belongs to a tier, contains four answers, and identifies
+ * exactly one correct answer. The class is fully JSON‑serializable using
+ * Jackson, with explicit property mappings to ensure compatibility with
+ * the question bank format.
+ *
+ * <p>Helper methods such as {@link #getWrongAnswers()} and
+ * {@link #getCorrectAnswer()} are excluded from JSON output and used only
+ * by gameplay logic. Labels (A–D) are assigned dynamically by the model
+ * when questions are presented to the player.</p>
+ */
 public class Question {
+
     private String id;
     private int tier;
-    
-    @JsonProperty("question") // Maps the field 'questionText' to 'question' in JSON
+
+    @JsonProperty("question")
     private String questionText;
-    
-    @JsonProperty("answers") // Maps 'answerList' to 'answers' in JSON
+
+    @JsonProperty("answers")
     private List<Answer> answerList;
 
+    /**
+     * Default constructor required for JSON deserialization.
+     */
     public Question() {}
 
+    /**
+     * Creates a fully specified question with ID, tier, text, and answers.
+     */
     public Question(String id, int tier, String questionText, List<Answer> answers) {
         this.id = id;
         this.tier = tier;
@@ -24,16 +43,20 @@ public class Question {
         this.answerList = answers;
     }
 
-    // --- LOGIC HELPERS (IGNORE THESE IN JSON) ---
-
-    @JsonIgnore // This prevents "wrongAnswers" from appearing in the JSON file
+    /**
+     * Returns all incorrect answers. Ignored during JSON serialization.
+     */
+    @JsonIgnore
     public List<Answer> getWrongAnswers() {
         return answerList.stream()
                 .filter(a -> !a.isCorrect())
                 .collect(Collectors.toList());
     }
 
-    @JsonIgnore // This prevents "correctAnswer" from appearing in the JSON file
+    /**
+     * Returns the correct answer, or null if none is marked. Ignored in JSON.
+     */
+    @JsonIgnore
     public Answer getCorrectAnswer() {
         return answerList.stream()
                 .filter(Answer::isCorrect)
@@ -41,8 +64,8 @@ public class Question {
                 .orElse(null);
     }
 
-    // --- GETTERS AND SETTERS ---
-    
+    // --- Getters and Setters ---
+
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 

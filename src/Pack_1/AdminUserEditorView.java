@@ -8,27 +8,53 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 
+/**
+ * JavaFX view for editing all aspects of a user's profile in admin mode.
+ * This screen exposes identity, progression, money statistics, win/loss
+ * records, and lifeline usage, along with reset and save actions. The layout
+ * uses a central form grid and a bottom action bar styled to match the
+ * application's theme.
+ *
+ * <p>Fields are grouped visually and logically to mirror the structure of
+ * the {@link User} model. The controller layer reads values from these
+ * fields, applies validation, and persists changes through {@code UserManager}.</p>
+ */
 public class AdminUserEditorView extends BorderPane {
 
+    // Identity
     private final TextField usernameField;
+
+    // Progression
     private final TextField currentTierField;
     private final TextField highestTierField;
+
+    // Money
     private final TextField lastGameMoneyField;
     private final TextField totalMoneyField;
+
+    // Win/loss
     private final TextField gamesWonField;
     private final TextField gamesLostField;
+
+    // Lifelines (session + lifetime)
     private final CheckBox superUsedBox;
     private final CheckBox entUsedBox;
     private final CheckBox interfUsedBox;
     private TextField lifelinesUsedField;
     private final TextField totalLifelinesField;
 
+    // Action buttons
     private final Button saveBtn;
     private final Button cancelBtn;
     private final Button resetProgressBtn;
     private final Button resetLifelinesBtn;
     private final Button resetStatsBtn;
 
+    /**
+     * Builds the full admin user editor UI, pre-populating all fields with
+     * the given user's current values. The layout is a grid of labeled fields
+     * followed by a bottom action bar containing reset and save controls.
+     */
     public AdminUserEditorView(User user) {
         setStyle("-fx-background-color: linear-gradient(to bottom, #1a0b2e, #000022);");
         setPadding(new Insets(20));
@@ -46,22 +72,33 @@ public class AdminUserEditorView extends BorderPane {
 
         int row = 0;
 
+        // Identity
         usernameField = new TextField(user.getUsername());
+
+        // Progression
         currentTierField = new TextField(String.valueOf(user.getCurrentTier()));
         highestTierField = new TextField(String.valueOf(user.getHighestTierReached()));
+
+        // Money
         lastGameMoneyField = new TextField(String.valueOf(user.getLastGameMoney()));
         totalMoneyField = new TextField(String.valueOf(user.getTotalMoneyEarned()));
+
+        // Win/loss
         gamesWonField = new TextField(String.valueOf(user.getGamesWon()));
         gamesLostField = new TextField(String.valueOf(user.getGamesLost()));
+
+        // Lifelines
         superUsedBox = new CheckBox("Superposition used");
         entUsedBox = new CheckBox("Entanglement used");
         interfUsedBox = new CheckBox("Interference used");
         superUsedBox.setSelected(user.isSuperpositionUsed());
         entUsedBox.setSelected(user.isEntanglementUsed());
         interfUsedBox.setSelected(user.isInterferenceUsed());
+
         lifelinesUsedField = new TextField(String.valueOf(user.getLifelinesUsed()));
         totalLifelinesField = new TextField(String.valueOf(user.getTotalLifelinesUsed()));
 
+        // Grid layout
         grid.add(new Label("Username:"), 0, row); grid.add(usernameField, 1, row++);
 
         grid.add(new Label("Current Tier (0-14):"), 0, row); grid.add(currentTierField, 1, row++);
@@ -78,9 +115,9 @@ public class AdminUserEditorView extends BorderPane {
         grid.add(interfUsedBox, 0, row, 2, 1); row++;
 
         grid.add(new Label("Current Game Lifelines Used:"), 0, row); grid.add(lifelinesUsedField, 1, row++);
-        
         grid.add(new Label("Total Lifelines Used:"), 0, row); grid.add(totalLifelinesField, 1, row++);
 
+        // Buttons
         saveBtn = new Button("Save");
         cancelBtn = new Button("Cancel");
         resetProgressBtn = new Button("Reset Progress");
@@ -101,7 +138,7 @@ public class AdminUserEditorView extends BorderPane {
         setBottom(buttons);
     }
 
-    // Getters for controller
+    // Getters for controller wiring
     public TextField getUsernameField() { return usernameField; }
     public TextField getCurrentTierField() { return currentTierField; }
     public TextField getHighestTierField() { return highestTierField; }

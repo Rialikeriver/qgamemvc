@@ -5,17 +5,41 @@ import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 
+/**
+ * View for creating a new player profile. This screen provides fields for
+ * entering a username and an optional password, along with Create/Cancel
+ * actions and an error label for validation feedback. The layout uses a
+ * centered vertical form styled consistently with the rest of the UI theme.
+ *
+ * <p>The controller layer is responsible for validating input, displaying
+ * errors through {@link #getErrorLabel()}, and invoking profile creation
+ * through the exposed buttons.</p>
+ */
 public class NewProfileView extends BorderPane {
+
+    // Form fields
     private TextField usernameField;
     private PasswordField passwordField;
+
+    // Action buttons
     private Button createBtn;
     private Button cancelBtn;
+
+    // Validation feedback
     private Label errorLabel;
 
+    /**
+     * Builds the new profile creation UI and initializes all form controls.
+     */
     public NewProfileView() {
         setupUI();
     }
 
+    /**
+     * Configures the layout, styling, and form components for the profile
+     * creation screen. The form includes username, optional password, an
+     * error label, and Create/Cancel buttons.
+     */
     private void setupUI() {
         this.setStyle("-fx-background-color: linear-gradient(to bottom, #1a0b2e, #000022);");
         this.setPadding(new Insets(20));
@@ -49,6 +73,7 @@ public class NewProfileView extends BorderPane {
         this.setCenter(centerBox);
     }
 
+    // Accessors for controller wiring
     public TextField getUsernameField() { return usernameField; }
     public PasswordField getPasswordField() { return passwordField; }
     public Button getCreateBtn() { return createBtn; }

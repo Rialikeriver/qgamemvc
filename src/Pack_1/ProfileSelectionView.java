@@ -7,17 +7,37 @@ import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 
+/**
+ * View for selecting, loading, deleting, or creating player profiles. This
+ * screen displays all existing profiles in a styled {@link ListView} and
+ * provides action buttons for profile management. The layout uses a centered
+ * vertical stack with a button row beneath the list.
+ *
+ * <p>The list uses {@link ProfileCell} to render each user entry with a
+ * consistent visual style. Controllers attach behavior to the exposed
+ * buttons to handle loading, deleting, creating, or navigating back.</p>
+ */
 public class ProfileSelectionView extends BorderPane {
+
+    // Profile list and action buttons
     private ListView<User> profileListView;
     private Button loadBtn;
     private Button deleteBtn;
     private Button newProfileBtn;
     private Button backBtn;
 
+    /**
+     * Builds the profile selection UI and initializes all controls.
+     */
     public ProfileSelectionView() {
         setupUI();
     }
 
+    /**
+     * Configures the layout, styling, and button arrangement for the profile
+     * selection screen. The list is styled with a custom cell factory and
+     * placed above a horizontal action bar.
+     */
     private void setupUI() {
         this.setStyle("-fx-background-color: linear-gradient(to bottom, #1a0b2e, #000022);");
         this.setPadding(new Insets(20));
@@ -51,6 +71,7 @@ public class ProfileSelectionView extends BorderPane {
         this.setCenter(centerBox);
     }
 
+    // Accessors for controller wiring
     public ListView<User> getProfileListView() { return profileListView; }
     public Button getLoadBtn() { return loadBtn; }
     public Button getDeleteBtn() { return deleteBtn; }

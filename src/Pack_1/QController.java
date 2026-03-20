@@ -7,28 +7,48 @@ import javafx.animation.Timeline;
 import javafx.scene.control.*;
 import javafx.geometry.Side;
 import javafx.geometry.NodeOrientation;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
-import javafx.scene.control.ButtonType;
 import javafx.application.Platform;
 import java.util.List;
-import java.util.Optional;
 import javafx.animation.Animation;
 
+import Pack_1.profile.Session;
+import Pack_1.profile.UserManager;
+
+/**
+ * Main controller for the gameplay loop. Handles:
+ * <ul>
+ *   <li>question progression and answer evaluation</li>
+ *   <li>lifeline activation and UI updates</li>
+ *   <li>countdown timer and pulse animation</li>
+ *   <li>game over and failure states</li>
+ *   <li>language switching</li>
+ *   <li>mid‑game and end‑game persistence through {@link UserManager}</li>
+ * </ul>
+ *
+ * <p>The controller coordinates the {@link QModel} (game state), the
+ * {@link QView} (UI), and the active {@link Session}. It updates the view
+ * whenever the model changes and ensures user progress is saved at the
+ * appropriate times.</p>
+ */
 public class QController {
+
     private QModel model;
     private QView view;
 
-    private Pack_1.profile.Session session;
-    private Pack_1.profile.UserManager userManager;
+    private Session session;
+    private UserManager userManager;
 
     private Timeline timer;
     private Timeline pulseAnimation;
     private int secondsRemaining;
 
+    /**
+     * Creates a new gameplay controller and initializes timers, animations,
+     * event handlers, and the initial display.
+     */
     public QController(QModel model, QView view,
-                       Pack_1.profile.Session session,
-                       Pack_1.profile.UserManager userManager) {
+                       Session session,
+                       UserManager userManager) {
         this.model = model;
         this.view = view;
         this.session = session;
@@ -40,6 +60,10 @@ public class QController {
         updateDisplay();
     }
 
+    /**
+     * Configures the 20‑second countdown timer and its visual state transitions.
+     * Handles warning/critical color changes and triggers timeout behavior.
+     */
     private void setupTimer() {
         timer = new Timeline(new KeyFrame(Duration.seconds(1), e -> {
             secondsRemaining--;
@@ -67,7 +91,9 @@ public class QController {
         timer.setCycleCount(Timeline.INDEFINITE);
     }
 
-
+    /**
+     * Creates the pulsing animation used during low‑time warnings.
+     */
     private void setupPulseAnimation() {
         pulseAnimation = new Timeline(
             new KeyFrame(Duration.ZERO,
@@ -86,6 +112,9 @@ public class QController {
         pulseAnimation.setCycleCount(Timeline.INDEFINITE);
     }
 
+    /**
+     * Starts a fresh 20‑second countdown for each question.
+     */
     private void startCountdown() {
         timer.stop();
         secondsRemaining = 20;
@@ -95,11 +124,12 @@ public class QController {
     }
 
     private void resumeCountdown() {
-        if (timer != null) {
-            timer.play();
-        }
+        if (timer != null) timer.play();
     }
-    
+
+    /**
+     * Evaluates the selected answer, updates the model, and handles success or failure.
+     */
     private void handleAnswer(String label) {
         timer.stop();
 
@@ -112,7 +142,7 @@ public class QController {
 
         if (isCorrect) {
             model.nextQuestion();
-            updateProgressInStore(); // Helper method added below
+            updateProgressInStore();
 
             if (model.isGameOver()) {
                 updateDisplay();
@@ -131,6 +161,10 @@ public class QController {
         handleFailure("TIME'S OVER.");
     }
 
+    /**
+     * Handles all failure states: disables UI, records results, and shows the
+     * game‑over overlay for losses.
+     */
     private void handleFailure(String message) {
         view.getBtnA().setDisable(true);
         view.getBtnB().setDisable(true);
@@ -144,7 +178,7 @@ public class QController {
         view.getTimerLabel().setText("--");
         view.getTimerLabel().setStyle("-fx-text-fill: gray; -fx-font-size: 40px;");
 
-        // NEW: record failure result (guaranteed money, loss, lifelines, totals)
+        // Record failure result (guaranteed money, loss, lifelines, totals)
         if (session.hasUser()) {
             userManager.recordGameResult(session.getCurrentUser(), model);
         }
@@ -158,14 +192,12 @@ public class QController {
 
         view.showOverlay(overlay);
 
-        // Play Again
         overlay.getPrimaryBtn().setOnAction(e -> {
             view.hideOverlay(overlay);
             model.resetGame();
             updateDisplay();
         });
 
-        // Quit (reset + save)
         overlay.getSecondaryBtn().setOnAction(e -> {
             if (session.hasUser()) {
                 userManager.finalizeGame(session.getCurrentUser(), model);
@@ -175,7 +207,9 @@ public class QController {
         });
     }
 
-
+    /**
+     * Attaches all UI event handlers for answers, lifelines, and settings.
+     */
     private void attachEvents() {
         view.getBtnA().setOnAction(e -> handleAnswer("A"));
         view.getBtnB().setOnAction(e -> handleAnswer("B"));
@@ -187,6 +221,9 @@ public class QController {
         view.getMenuDiamond().setOnAction(e -> showSettingsMenu());
     }
 
+    /**
+     * Handles the Interference lifeline and displays the suggestion popup.
+     */
     private void handleInterference() {
         timer.stop();
 
@@ -194,15 +231,11 @@ public class QController {
         if (suggested != null) {
             model.setInterferenceUsed(true);
 
-            String title = "Quantum Interference";
-            String header = "Probability Wave Measured";
-            String message = "Constructive Interference suggests: " + suggested.getLabel();
-
             MiniPopupView popup = new MiniPopupView(
-                    title,
-                    header,
-                    message,
-                    false // only OK button
+                    "Quantum Interference",
+                    "Probability Wave Measured",
+                    "Constructive Interference suggests: " + suggested.getLabel(),
+                    false
             );
 
             view.showOverlay(popup);
@@ -216,6 +249,9 @@ public class QController {
         }
     }
 
+    /**
+     * Handles the Superposition lifeline (disables two answers).
+     */
     private void handleSuperposition() {
         List<Answer> toDisable = model.applySuperposition();
         if (toDisable != null) {
@@ -226,6 +262,9 @@ public class QController {
         }
     }
 
+    /**
+     * Handles the Entanglement lifeline (marks two answers as linked).
+     */
     private void handleEntanglement() {
         model.applyEntanglement();
         view.getEntanglementBtn().setDisable(true);
@@ -233,7 +272,9 @@ public class QController {
         updateProgressInStore();
     }
 
-    // Helper to avoid repeating userManager calls
+    /**
+     * Saves mid‑game progress (tier, lifelines, money) for the active user.
+     */
     private void updateProgressInStore() {
         if (session.hasUser()) {
             userManager.updateUserProgress(
@@ -242,11 +283,15 @@ public class QController {
                     model.isSuperpositionUsed(),
                     model.isEntanglementUsed(),
                     model.isInterferenceUsed(),
-                    model.getLastEarnedMoney() 
+                    model.getLastEarnedMoney()
             );
         }
     }
 
+    /**
+     * Updates the UI for the current question, lifeline states, ladder highlight,
+     * earnings, and restarts the countdown.
+     */
     private void updateDisplay() {
         Question q = model.getCurrentQuestion();
         if (q != null) {
@@ -256,7 +301,7 @@ public class QController {
 
             view.getSuperpositionBtn().setDisable(model.isSuperpositionUsed());
             view.getEntanglementBtn().setDisable(model.isEntanglementUsed());
-            view.getInterferenceBtn().setDisable(model.isInterferenceUsed()); //interference
+            view.getInterferenceBtn().setDisable(model.isInterferenceUsed());
 
             view.getEarningsLabel().setText("$" + model.getLastEarnedMoney());
 
@@ -267,6 +312,9 @@ public class QController {
         }
     }
 
+    /**
+     * Shows the language/settings menu and reloads questions when switching languages.
+     */
     private void showSettingsMenu() {
         ContextMenu settingsMenu = new ContextMenu();
         Menu langMenu = new Menu("Languages");
@@ -299,6 +347,10 @@ public class QController {
         settingsMenu.show(view.getMenuDiamond(), Side.BOTTOM, 0, 0);
     }
 
+    /**
+     * Handles the win state: records results, shows the overlay, and wires
+     * Play Again / Quit actions.
+     */
     private void handleGameOver() {
         timer.stop();
 
@@ -306,7 +358,6 @@ public class QController {
             userManager.recordGameResult(session.getCurrentUser(), model);
         }
 
-        // Correct money (1,000,000 on win, guaranteed money on loss)
         GameOverlayView overlay = new GameOverlayView(
                 model.isPlayerWon() ? "YOU WON!" : "YOU HAVE FAILED!",
                 model.isPlayerWon() ? "CONGRATULATIONS!" : "BE DESTITUTE",
@@ -314,17 +365,14 @@ public class QController {
                 model.isPlayerWon()
         );
 
-
         view.showOverlay(overlay);
 
-        // Play Again
         overlay.getPrimaryBtn().setOnAction(e -> {
             view.hideOverlay(overlay);
             model.resetGame();
             updateDisplay();
         });
 
-        // Quit (reset + save)
         overlay.getSecondaryBtn().setOnAction(e -> {
             if (session.hasUser()) {
                 userManager.finalizeGame(session.getCurrentUser(), model);

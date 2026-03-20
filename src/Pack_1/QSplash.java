@@ -10,37 +10,49 @@ import javafx.stage.StageStyle;
 import javafx.util.Duration;
 
 /**
- * Splash screen class for Ria's Quantum Millionaire.
- * Extends Stage to act as a standalone window.
+ * Splash screen for Quantum Millionaire. This lightweight stage appears briefly
+ * at application startup, displaying the game title and a loading message before
+ * transitioning automatically to the main mode‑selection screen.
+ *
+ * <p>The splash uses an undecorated window, a centered layout, and a short
+ * timed delay (3 seconds) as required by the assignment specification. When the
+ * delay completes, the splash closes itself and invokes the provided callback
+ * to continue application initialization.</p>
  */
 public class QSplash extends Stage {
-    
+
+    /**
+     * Creates a splash window and schedules its automatic dismissal.
+     *
+     * @param onComplete a callback executed after the splash closes
+     */
     public QSplash(Runnable onComplete) {
-        // 1. Window Style: Removes the top bar (minimize/close buttons)
+
+        // Remove window decorations (title bar, close/minimize buttons)
         this.initStyle(StageStyle.UNDECORATED);
 
-        // 2. UI Elements
+        // Title label
         Label title = new Label("RIA'S QUANTUM MILLIONAIRE");
         title.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #d4af37;");
-        
+
+        // Loading message
         Label loading = new Label("Initializing Quantum States...");
         loading.setStyle("-fx-text-fill: white;");
 
-        // 3. Layout Container
+        // Layout container
         VBox layout = new VBox(20, title, loading);
         layout.setAlignment(Pos.CENTER);
-        // Dark purple theme to match your game background
         layout.setStyle("-fx-background-color: #1a0b2e; -fx-border-color: #d4af37; -fx-border-width: 2;");
-        
-        // 4. Scene setup
+
+        // Scene setup
         this.setScene(new Scene(layout, 500, 300));
         this.centerOnScreen();
 
-        // 5. Timer: 3 seconds as required by Assignment 4
+        // 3‑second delay before continuing to the main application
         PauseTransition delay = new PauseTransition(Duration.seconds(3));
         delay.setOnFinished(e -> {
-            this.close();     // Close the splash
-            onComplete.run(); // Call back to the Launcher to start the main game
+            this.close();
+            onComplete.run();
         });
         delay.play();
     }

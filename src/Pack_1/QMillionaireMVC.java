@@ -12,58 +12,78 @@ import javafx.scene.text.TextAlignment;
 
 import java.util.List;
 
+/**
+ * Entry point and top‑level coordinator for the Quantum Millionaire application.
+ * This class initializes persistent stores, manages the active user session,
+ * and routes between all major screens (splash, mode selection, admin tools,
+ * profile management, and gameplay). It acts as the central navigation hub
+ * for the entire MVC architecture.
+ *
+ * <p>The controller constructs views on demand, wires them to their respective
+ * controllers, and applies the shared CSS theme. It also restores mid‑game
+ * progress when a returning player resumes a session.</p>
+ */
 public class QMillionaireMVC extends Application {
-	private Pack_1.profile.UserManager userManager;
-	private Pack_1.profile.Session session;
-	private ProfileController profileController;
 
+    private Pack_1.profile.UserManager userManager;
+    private Pack_1.profile.Session session;
+    private ProfileController profileController;
+
+    /**
+     * Initializes persistent stores, session state, and shows the splash screen.
+     * After the splash completes, the user is taken to the mode selection screen.
+     */
     @Override
     public void start(Stage primaryStage) {
-    	userManager = new Pack_1.profile.UserManager(
-    	        new Pack_1.profile.JsonUserStore(),
-    	        new Pack_1.profile.JsonStatsStore()
-    	);
-    	session = new Pack_1.profile.Session();
-    	profileController = new ProfileController(userManager);
-    	
+        userManager = new Pack_1.profile.UserManager(
+                new Pack_1.profile.JsonUserStore(),
+                new Pack_1.profile.JsonStatsStore()
+        );
+        session = new Pack_1.profile.Session();
+        profileController = new ProfileController(userManager);
+
         QSplash splash = new QSplash(() -> {
             VBox modeBox = new VBox(40);
             modeBox.setAlignment(Pos.CENTER);
             modeBox.setStyle("-fx-background-color: linear-gradient(to bottom, #1a0b2e, #000022);");
-            
+
             Label title = new Label("SELECT GAME MODE");
             title.setStyle("-fx-font-size: 36px; -fx-font-weight: bold; -fx-text-fill: #d4af37;");
-            
+
             Button adminBtn = new Button("ADMIN MODE\nManage Questions");
             adminBtn.getStyleClass().addAll("answer-btn");
             adminBtn.setPrefSize(400, 120);
             adminBtn.setStyle("-fx-font-size: 20px;");
             adminBtn.setAlignment(Pos.CENTER);
             adminBtn.setTextAlignment(TextAlignment.CENTER);
-            
+
             Button userBtn = new Button("PLAYER MODE\nPlay Quantum Millionaire");
             userBtn.getStyleClass().addAll("answer-btn");
             userBtn.setPrefSize(400, 120);
             userBtn.setStyle("-fx-font-size: 20px;");
             userBtn.setAlignment(Pos.CENTER);
             userBtn.setTextAlignment(TextAlignment.CENTER);
-            
+
             modeBox.getChildren().addAll(title, adminBtn, userBtn);
-            
+
             Scene modeScene = new Scene(modeBox, 1280, 720);
             addCSS(modeScene);
             primaryStage.setTitle("Quantum Millionaire - Select Mode");
             primaryStage.setScene(modeScene);
-            
+
             adminBtn.setOnAction(e -> showAdminScreen(primaryStage));
             userBtn.setOnAction(e -> showPlayerMenu(primaryStage));
-            
+
             primaryStage.show();
         });
+
         splash.show();
     }
-    
-    // This is exclusively for later returns to the main selection screen.
+
+    /**
+     * Rebuilds and displays the mode selection screen. Used when returning
+     * from admin or player menus.
+     */
     private void showModeSelection(Stage primaryStage) {
         VBox modeBox = new VBox(40);
         modeBox.setAlignment(Pos.CENTER);
@@ -97,60 +117,70 @@ public class QMillionaireMVC extends Application {
         primaryStage.setScene(modeScene);
     }
 
-    
+    /**
+     * Shows the admin panel with options to manage questions or users.
+     */
     private void showAdminScreen(Stage primaryStage) {
         AdminMenuView view = new AdminMenuView();
 
         view.getManageQuestionsBtn().setOnAction(e -> showQuestionManager(primaryStage));
         view.getManageUsersBtn().setOnAction(e -> showAdminUserList(primaryStage));
-        view.getBackBtn().setOnAction(e -> showModeSelection(primaryStage));  // To (return specialized) mode selection.
+        view.getBackBtn().setOnAction(e -> showModeSelection(primaryStage));
 
         Scene scene = new Scene(view, 1280, 720);
         addCSS(scene);
         primaryStage.setTitle("Quantum Millionaire - Admin Panel");
         primaryStage.setScene(scene);
     }
-    
+
+    /**
+     * Opens the question manager (admin mode).
+     */
     private void showQuestionManager(Stage primaryStage) {
         QModeSelectionModel adminModel = new QModeSelectionModel();
         QModeSelectionView adminView = new QModeSelectionView();
-        new QModeSelectionController(adminModel, adminView); 
-        
+        new QModeSelectionController(adminModel, adminView);
+
         Scene adminScene = new Scene(adminView, 1280, 720);
         addCSS(adminScene);
         primaryStage.setTitle("Quantum Millionaire - Admin Panel");
         primaryStage.setScene(adminScene);
     }
 
+    /**
+     * Starts or resumes a game session. If a user is logged in, their progress
+     * (tier and lifelines) is restored before gameplay begins.
+     */
     private void showGameScreen(Stage primaryStage) {
-    	// You may later use session.getCurrentUser() to restore progress
         List<Question> questions = QuestionLoader.loadQuestions();
         QModel gameModel = new QModel(questions);
 
-        // Restore progress if a user is logged in
         if (session.hasUser()) {
             Pack_1.profile.User u = session.getCurrentUser();
-            
-            gameModel.resetGame();			// 0's out.
-            // currentTier == how many questions they’ve cleared
+
+            gameModel.resetGame();
             for (int i = 0; i < u.getCurrentTier(); i++) {
                 gameModel.nextQuestion();
             }
-            
-            // Set lifelines based on their use state
+
             gameModel.setSuperpositionUsed(u.isSuperpositionUsed());
             gameModel.setEntanglementUsed(u.isEntanglementUsed());
             gameModel.setInterferenceUsed(u.isInterferenceUsed());
         }
+
         QView gameView = new QView();
         new QController(gameModel, gameView, session, userManager);
-        
+
         Scene gameScene = new Scene(gameView, 1280, 720);
         addCSS(gameScene);
         primaryStage.setTitle("Quantum Millionaire - Game");
         primaryStage.setScene(gameScene);
     }
-    
+
+    /**
+     * Shows the player menu with options to start a new profile, load a profile,
+     * quit, or return to mode selection.
+     */
     private void showPlayerMenu(Stage primaryStage) {
         PlayerMenuView view = new PlayerMenuView();
 
@@ -159,12 +189,14 @@ public class QMillionaireMVC extends Application {
         view.getQuitBtn().setOnAction(e -> primaryStage.close());
         view.getBackBtn().setOnAction(e -> showModeSelection(primaryStage));
 
-
         Scene scene = new Scene(view, 1280, 720);
         addCSS(scene);
         primaryStage.setScene(scene);
     }
 
+    /**
+     * Shows the admin user list and wires admin‑specific callbacks.
+     */
     private void showAdminUserList(Stage primaryStage) {
         ProfileSelectionView view = new ProfileSelectionView();
         AdminUserController controller = new AdminUserController(userManager);
@@ -182,6 +214,9 @@ public class QMillionaireMVC extends Application {
         primaryStage.setScene(scene);
     }
 
+    /**
+     * Shows the admin "create new user" screen.
+     */
     private void showAdminNewUser(Stage primaryStage) {
         NewProfileView view = new NewProfileView();
 
@@ -197,6 +232,9 @@ public class QMillionaireMVC extends Application {
         primaryStage.setScene(scene);
     }
 
+    /**
+     * Shows the new profile creation screen for players.
+     */
     private void showNewProfileScreen(Stage primaryStage) {
         NewProfileView view = new NewProfileView();
 
@@ -214,6 +252,9 @@ public class QMillionaireMVC extends Application {
         primaryStage.setScene(scene);
     }
 
+    /**
+     * Shows the profile selection screen for players.
+     */
     private void showLoadProfileScreen(Stage primaryStage) {
         ProfileSelectionView view = new ProfileSelectionView();
 
@@ -232,6 +273,9 @@ public class QMillionaireMVC extends Application {
         primaryStage.setScene(scene);
     }
 
+    /**
+     * Shows the admin user editor for modifying an existing profile.
+     */
     private void showAdminUserEditor(Stage primaryStage, Pack_1.profile.User user) {
         AdminUserEditorView view = new AdminUserEditorView(user);
 
@@ -250,10 +294,10 @@ public class QMillionaireMVC extends Application {
                 user.setLifelinesUsed(Integer.parseInt(view.getLifelinesUsedField().getText()));
                 user.setTotalLifelinesUsed(Integer.parseInt(view.getTotalLifelinesField().getText()));
 
-                userManagerSaveAll(); 
+                userManagerSaveAll();
                 showAdminUserList(primaryStage);
             } catch (NumberFormatException ex) {
-                // you can add a small error label or dialog here
+                // Optional: add error label or dialog
             }
         });
 
@@ -284,6 +328,7 @@ public class QMillionaireMVC extends Application {
             user.setGamesLost(0);
             user.setHighestTierReached(0);
             user.setTotalLifelinesUsed(0);
+
             view.getTotalMoneyField().setText("0");
             view.getGamesWonField().setText("0");
             view.getGamesLostField().setText("0");
@@ -297,11 +342,16 @@ public class QMillionaireMVC extends Application {
         primaryStage.setScene(scene);
     }
 
-    // Wrapper class to access private data
+    /**
+     * Saves all user data through the user manager.
+     */
     private void userManagerSaveAll() {
         userManager.saveAllUsers();
     }
 
+    /**
+     * Applies the shared CSS theme to a scene.
+     */
     private void addCSS(Scene scene) {
         try {
             String cssPath = getClass().getResource("/Pack_1/style.css").toExternalForm();
@@ -311,5 +361,7 @@ public class QMillionaireMVC extends Application {
         }
     }
 
-    public static void main(String[] args) { launch(args); }
+    public static void main(String[] args) {
+        launch(args);
+    }
 }

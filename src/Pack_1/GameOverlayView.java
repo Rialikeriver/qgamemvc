@@ -16,11 +16,26 @@ import java.text.NumberFormat;
 import java.util.Locale;
 import java.util.Random;
 
+/**
+ * Full‑screen overlay shown at the end of a game, used for both win and loss
+ * states. Displays a large title, a subtitle, the formatted money earned, and
+ * two action buttons. When the player wins, a confetti animation is added for
+ * visual impact.
+ *
+ * <p>The overlay darkens the background using a semi‑transparent layer and
+ * centers all content in a vertical stack. Buttons are styled using the shared
+ * {@code answer-btn} class to match the rest of the UI.</p>
+ */
 public class GameOverlayView extends StackPane {
 
+    // Action buttons (Play Again / Quit)
     private final Button primaryBtn;
     private final Button secondaryBtn;
 
+    /**
+     * Builds the overlay with the given title, subtitle, raw money string, and
+     * win/loss state. Money is parsed and formatted with commas for readability.
+     */
     public GameOverlayView(String title, String subtitle, String amountRaw, boolean isWin) {
 
         setStyle("-fx-background-color: rgba(0,0,0,0.75);");
@@ -54,6 +69,8 @@ public class GameOverlayView extends StackPane {
             amountLbl.setStyle("-fx-font-size: 72px; -fx-text-fill: #d4af37; -fx-font-weight: bold;");
 
             box.getChildren().addAll(titleLbl, subtitleLbl, earnedLbl, amountLbl);
+
+            // Confetti animation for win state
             addConfetti();
         } else {
             Label lossLbl = new Label("You earned " + moneyText);
@@ -76,7 +93,10 @@ public class GameOverlayView extends StackPane {
         getChildren().add(box);
     }
 
-
+    /**
+     * Adds falling confetti circles with randomized colors, positions, and
+     * animation durations. Used only in win state to enhance visual feedback.
+     */
     private void addConfetti() {
         Random r = new Random();
 
@@ -97,6 +117,7 @@ public class GameOverlayView extends StackPane {
         }
     }
 
+    // Accessors for controller wiring
     public Button getPrimaryBtn() { return primaryBtn; }
     public Button getSecondaryBtn() { return secondaryBtn; }
 }

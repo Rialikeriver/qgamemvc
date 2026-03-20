@@ -7,11 +7,26 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 
+/**
+ * JavaFX view for the administrator main menu. This screen provides access
+ * to question management, user management, and navigation back to the main
+ * application flow. The layout uses a centered vertical button group and a
+ * styled title banner at the top.
+ *
+ * <p>Buttons are styled using the shared {@code answer-btn} CSS class so they
+ * visually match the rest of the application's UI theme.</p>
+ */
 public class AdminMenuView extends BorderPane {
+
+    // UI controls
     private Button manageQuestionsBtn;
     private Button manageUsersBtn;
     private Button backBtn;
 
+    /**
+     * Builds the admin menu layout, including title styling and the
+     * vertically stacked action buttons.
+     */
     public AdminMenuView() {
         setStyle("-fx-background-color: linear-gradient(to bottom, #1a0b2e, #000022);");
         setPadding(new Insets(20));
@@ -34,6 +49,7 @@ public class AdminMenuView extends BorderPane {
         setCenter(box);
     }
 
+    // Accessors for controller wiring
     public Button getManageQuestionsBtn() { return manageQuestionsBtn; }
     public Button getManageUsersBtn() { return manageUsersBtn; }
     public Button getBackBtn() { return backBtn; }
