@@ -2,6 +2,7 @@ package Pack_1;
 
 import javafx.util.Duration;
 import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.scene.control.*;
 import javafx.geometry.Side;
@@ -12,6 +13,7 @@ import javafx.scene.control.ButtonType;
 import javafx.application.Platform;
 import java.util.List;
 import java.util.Optional;
+import javafx.animation.Animation;
 
 public class QController {
     private QModel model;
@@ -21,6 +23,7 @@ public class QController {
     private Pack_1.profile.UserManager userManager;
 
     private Timeline timer;
+    private Timeline pulseAnimation;
     private int secondsRemaining;
 
     public QController(QModel model, QView view,
@@ -32,6 +35,7 @@ public class QController {
         this.userManager = userManager;
 
         setupTimer();
+        setupPulseAnimation();
         attachEvents();
         updateDisplay();
     }
@@ -41,13 +45,45 @@ public class QController {
             secondsRemaining--;
             view.getTimerLabel().setText(secondsRemaining + "s");
 
-            if (secondsRemaining <= 5) {
-                view.getTimerLabel().setStyle("-fx-font-size: 40px; -fx-text-fill: #ff4d4d; -fx-font-weight: bold;");
+            Label t = view.getTimerLabel();
+            t.getStyleClass().setAll("timer-base");
+
+            if (secondsRemaining > 5) {
+                pulseAnimation.stop();
+            }
+            else if (secondsRemaining > 2) {
+                t.getStyleClass().add("timer-warning");
+                pulseAnimation.setRate(1.0);
+                if (pulseAnimation.getStatus() != Animation.Status.RUNNING) pulseAnimation.play();
+            }
+            else {
+                t.getStyleClass().add("timer-critical");
+                pulseAnimation.setRate(1.5);
+                if (pulseAnimation.getStatus() != Animation.Status.RUNNING) pulseAnimation.play();
             }
 
             if (secondsRemaining <= 0) handleTimeOut();
         }));
         timer.setCycleCount(Timeline.INDEFINITE);
+    }
+
+
+    private void setupPulseAnimation() {
+        pulseAnimation = new Timeline(
+            new KeyFrame(Duration.ZERO,
+                new KeyValue(view.getTimerLabel().scaleXProperty(), 1.0),
+                new KeyValue(view.getTimerLabel().scaleYProperty(), 1.0)
+            ),
+            new KeyFrame(Duration.millis(250),
+                new KeyValue(view.getTimerLabel().scaleXProperty(), 1.12),
+                new KeyValue(view.getTimerLabel().scaleYProperty(), 1.12)
+            ),
+            new KeyFrame(Duration.millis(500),
+                new KeyValue(view.getTimerLabel().scaleXProperty(), 1.0),
+                new KeyValue(view.getTimerLabel().scaleYProperty(), 1.0)
+            )
+        );
+        pulseAnimation.setCycleCount(Timeline.INDEFINITE);
     }
 
     private void startCountdown() {
@@ -221,6 +257,8 @@ public class QController {
             view.getSuperpositionBtn().setDisable(model.isSuperpositionUsed());
             view.getEntanglementBtn().setDisable(model.isEntanglementUsed());
             view.getInterferenceBtn().setDisable(model.isInterferenceUsed()); //interference
+
+            view.getEarningsLabel().setText("$" + model.getLastEarnedMoney());
 
             startCountdown();
         } else {

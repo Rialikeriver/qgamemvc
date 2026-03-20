@@ -10,7 +10,10 @@ public class QView extends StackPane {
     private BorderPane gamePane;
     protected Label questionLabel, timerLabel;
     protected Button btnA, btnB, btnC, btnD, superpositionBtn, entanglementBtn, menuDiamond, interferenceBtn;
+    protected Label earningsLabel;
     protected VBox moneyLadder;
+    private List<Label> ladderCells = new ArrayList<>();
+
     
     public QView() {
         gamePane = new BorderPane();
@@ -37,17 +40,49 @@ public class QView extends StackPane {
         menuDiamond.getStyleClass().add("menu-diamond");
         
         timerLabel = new Label("20s");
-        timerLabel.setStyle("-fx-font-size: 40px; -fx-text-fill: #d4af37; -fx-font-weight: bold;");
-        
-        StackPane topPane = new StackPane(timerLabel, menuDiamond);
-        StackPane.setAlignment(timerLabel, Pos.TOP_LEFT);
+        timerLabel.getStyleClass().add("timer-base");
+        timerLabel.setWrapText(false);
+
+        // Top bar layout (timer removed from here)
+        StackPane topPane = new StackPane(menuDiamond);
         StackPane.setAlignment(menuDiamond, Pos.TOP_RIGHT);
         gamePane.setTop(topPane);
 
+        // LEFT: Money Ladder
         moneyLadder = createLadder();
         moneyLadder.setStyle("-fx-background-color: rgba(0,0,0,0.5); -fx-background-radius: 10;");
         gamePane.setLeft(moneyLadder);
-        
+
+        // RIGHT: Timer Panel
+        VBox timerPane = new VBox();
+        timerPane.setAlignment(Pos.CENTER);
+        timerPane.setPadding(new Insets(20));
+        timerPane.setMinWidth(200);
+        timerPane.setPrefWidth(200);
+
+        // allow vertical expansion
+        timerPane.setMaxHeight(Double.MAX_VALUE);
+        BorderPane.setAlignment(timerPane, Pos.CENTER);
+
+        // allow the label to grow
+        timerLabel.setMaxWidth(Double.MAX_VALUE);
+        timerLabel.setMaxHeight(Double.MAX_VALUE);
+        VBox.setVgrow(timerLabel, Priority.ALWAYS);
+
+        timerPane.getChildren().add(timerLabel);
+
+//		Alternate to timerPane.getChildren().add(timerLabel) : Adds a black box effect
+//        StackPane timerBox = new StackPane(timerLabel);
+//        timerBox.getStyleClass().add("timer-box");
+//        timerBox.setMaxWidth(Region.USE_PREF_SIZE);
+//        timerBox.setMaxHeight(Region.USE_PREF_SIZE);
+//
+//        timerPane.getChildren().add(timerBox);
+
+        gamePane.setRight(timerPane);
+
+
+        // CENTER: Main Game Area
         VBox centerBox = new VBox(30);
         centerBox.setAlignment(Pos.CENTER);
 
@@ -57,7 +92,8 @@ public class QView extends StackPane {
         questionLabel.setPrefWidth(600);
 
         GridPane grid = new GridPane();
-        grid.setHgap(20); grid.setVgap(15);
+        grid.setHgap(20); 
+        grid.setVgap(15);
         grid.setAlignment(Pos.CENTER);
 
         btnA = createAnswerButton("A");
@@ -65,17 +101,18 @@ public class QView extends StackPane {
         btnC = createAnswerButton("C");
         btnD = createAnswerButton("D");
 
-        grid.add(btnA, 0, 0); grid.add(btnB, 1, 0);
-        grid.add(btnC, 0, 1); grid.add(btnD, 1, 1);
+        grid.add(btnA, 0, 0); 
+        grid.add(btnB, 1, 0);
+        grid.add(btnC, 0, 1); 
+        grid.add(btnD, 1, 1);
 
         superpositionBtn = new Button("SUPERPOSITION");
         superpositionBtn.getStyleClass().add("answer-btn");
         entanglementBtn = new Button("ENTANGLEMENT");
         entanglementBtn.getStyleClass().add("answer-btn");
         
-        interferenceBtn = new Button("INTERFERENCE"); //^
+        interferenceBtn = new Button("INTERFERENCE");
         interferenceBtn.getStyleClass().add("answer-btn");
-        
 
         HBox lifelineBox = new HBox(20, superpositionBtn, entanglementBtn, interferenceBtn);
         lifelineBox.setAlignment(Pos.CENTER);
@@ -94,16 +131,41 @@ public class QView extends StackPane {
     private VBox createLadder() {
         VBox ladder = new VBox(5);
         ladder.getStyleClass().add("ladder-container");
+
         List<String> levels = new ArrayList<>(Arrays.asList(QModel.LADDER_VALUES));
         Collections.reverse(levels);
+
         for (String s : levels) {
             Label l = new Label(s);
             l.getStyleClass().add("ladder-cell");
             l.setMaxWidth(Double.MAX_VALUE);
             ladder.getChildren().add(l);
+            ladderCells.add(l);   // <-- store only real ladder cells
         }
+
+        // NEW: spacer that pushes earnings label to bottom
+        Region spacer = new Region();
+        VBox.setVgrow(spacer, Priority.ALWAYS);
+        ladder.getChildren().add(spacer);
+        
+        // Earnings label
+        earningsLabel = new Label("$0");
+        earningsLabel.setAlignment(Pos.CENTER);
+        earningsLabel.setMaxWidth(Double.MAX_VALUE);
+        earningsLabel.setStyle(
+            "-fx-font-size: 22px;" +
+            "-fx-text-fill: linear-gradient(#ffdf00, #d4af37);" +
+            "-fx-font-weight: bold;" +
+            "-fx-padding: 10 0 0 0;" +
+            "-fx-effect: dropshadow(gaussian, #d4af37, 8, 0.2, 0, 0);"
+        );
+
+        //ladder.getChildren().add(new Separator());
+        ladder.getChildren().add(earningsLabel);
+
         return ladder;
     }
+
 
     public void updateQuestion(String text, List<Answer> answers) {
         questionLabel.setText(text);
@@ -121,12 +183,11 @@ public class QView extends StackPane {
     }
 
     public void updateLadderHighlight(int currentIndex) {
-        int total = moneyLadder.getChildren().size();
-        int target = total - 1 - currentIndex; 
-        for (int i = 0; i < total; i++) {
-            moneyLadder.getChildren().get(i).setId(i == target ? "current-level" : "");
+        for (int i = 0; i < ladderCells.size(); i++) {
+            ladderCells.get(i).setId(i == ladderCells.size() - 1 - currentIndex ? "current-level" : "");
         }
     }
+
 
     public void resetButtons() {
         Button[] btns = {btnA, btnB, btnC, btnD};
@@ -158,6 +219,8 @@ public class QView extends StackPane {
     public Button getMenuDiamond() { return menuDiamond; }
     public Label getTimerLabel() { return timerLabel; }
     public Label getQuestionLabel() { return questionLabel; }
+    public Label getEarningsLabel() { return earningsLabel; }
+
     
     // Overlay Methods
     public void showOverlay(javafx.scene.Node overlay) {
