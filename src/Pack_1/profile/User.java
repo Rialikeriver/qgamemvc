@@ -16,6 +16,7 @@ public class User {
     // Lifeline variables
     private boolean superpositionUsed;			
     private boolean entanglementUsed;
+    private boolean interferenceUsed;
     private int totalLifelinesUsed;
 
     public User() {}
@@ -40,7 +41,7 @@ public class User {
     public int getHighestTierReached() { return highestTierReached; }
     public boolean isSuperpositionUsed() { return superpositionUsed; }
     public boolean isEntanglementUsed() { return entanglementUsed; }
-    //public boolean isThirdLifeLineUsed() { return thirdLLUsed; }
+    public boolean isInterferenceUsed() { return interferenceUsed; }
     public int getTotalLifelinesUsed() { return totalLifelinesUsed; }
 
     public void setUsername(String username) { this.username = username; }
@@ -55,6 +56,6 @@ public class User {
     public void setHighestTierReached(int highestTierReached) { this.highestTierReached = highestTierReached; }
     public void setSuperpositionUsed(boolean used) { this.superpositionUsed = used; }
     public void setEntanglementUsed(boolean used) { this.entanglementUsed = used; }
-    //public void setThirdLifeLineUsed(boolean used) { this.thirdLLUsed = used; }
+    public void setInterferenceUsed(boolean used) { this.interferenceUsed = used; }
     public void setTotalLifelinesUsed(int totalLifelinesUsed) { this.totalLifelinesUsed = totalLifelinesUsed; }
 }

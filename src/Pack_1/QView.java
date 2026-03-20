@@ -6,26 +6,29 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import java.util.*;
 
-public class QView extends BorderPane {
+public class QView extends StackPane {
+    private BorderPane gamePane;
     protected Label questionLabel, timerLabel;
     protected Button btnA, btnB, btnC, btnD, superpositionBtn, entanglementBtn, menuDiamond, interferenceBtn;
     protected VBox moneyLadder;
     
     public QView() {
-        this.getStyleClass().add("game-pane");
-        this.setPadding(new Insets(20));
-        
+        gamePane = new BorderPane();
+        gamePane.getStyleClass().add("game-pane");
+        gamePane.setPadding(new Insets(20));
+
         try {
             var resource = getClass().getResource("/WWTB_A_Millionaire_Background.png");
             if (resource != null) {
-                this.setStyle("-fx-background-image: url('" + resource.toExternalForm() + "'); " +
-                              "-fx-background-size: cover; -fx-background-position: center;");
+                gamePane.setStyle("-fx-background-image: url('" + resource.toExternalForm() + "'); " +
+                                  "-fx-background-size: cover; -fx-background-position: center;");
             } else {
-                this.setStyle("-fx-background-color: #000022;");
+                gamePane.setStyle("-fx-background-color: #000022;");
             }
         } catch (Exception e) { e.printStackTrace(); }
 
         initUI();
+        getChildren().add(gamePane);
     }
 
     private void initUI() {
@@ -39,11 +42,11 @@ public class QView extends BorderPane {
         StackPane topPane = new StackPane(timerLabel, menuDiamond);
         StackPane.setAlignment(timerLabel, Pos.TOP_LEFT);
         StackPane.setAlignment(menuDiamond, Pos.TOP_RIGHT);
-        this.setTop(topPane);
+        gamePane.setTop(topPane);
 
         moneyLadder = createLadder();
         moneyLadder.setStyle("-fx-background-color: rgba(0,0,0,0.5); -fx-background-radius: 10;");
-        this.setLeft(moneyLadder);
+        gamePane.setLeft(moneyLadder);
         
         VBox centerBox = new VBox(30);
         centerBox.setAlignment(Pos.CENTER);
@@ -78,7 +81,7 @@ public class QView extends BorderPane {
         lifelineBox.setAlignment(Pos.CENTER);
 
         centerBox.getChildren().addAll(questionLabel, grid, lifelineBox);
-        this.setCenter(centerBox);
+        gamePane.setCenter(centerBox);
     }
 
     private Button createAnswerButton(String label) {
@@ -156,4 +159,13 @@ public class QView extends BorderPane {
     public Label getTimerLabel() { return timerLabel; }
     public Label getQuestionLabel() { return questionLabel; }
     
+    // Overlay Methods
+    public void showOverlay(javafx.scene.Node overlay) {
+        getChildren().add(overlay);
+    }
+
+    public void hideOverlay(javafx.scene.Node overlay) {
+        getChildren().remove(overlay);
+    }
 }
+

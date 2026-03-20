@@ -8,6 +8,8 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.TextAlignment;
+
 import java.util.List;
 
 public class QMillionaireMVC extends Application {
@@ -32,15 +34,19 @@ public class QMillionaireMVC extends Application {
             Label title = new Label("SELECT GAME MODE");
             title.setStyle("-fx-font-size: 36px; -fx-font-weight: bold; -fx-text-fill: #d4af37;");
             
-            Button adminBtn = new Button(" ADMIN MODE\nManage Questions");
+            Button adminBtn = new Button("ADMIN MODE\nManage Questions");
             adminBtn.getStyleClass().addAll("answer-btn");
             adminBtn.setPrefSize(400, 120);
             adminBtn.setStyle("-fx-font-size: 20px;");
+            adminBtn.setAlignment(Pos.CENTER);
+            adminBtn.setTextAlignment(TextAlignment.CENTER);
             
             Button userBtn = new Button("PLAYER MODE\nPlay Quantum Millionaire");
             userBtn.getStyleClass().addAll("answer-btn");
             userBtn.setPrefSize(400, 120);
             userBtn.setStyle("-fx-font-size: 20px;");
+            userBtn.setAlignment(Pos.CENTER);
+            userBtn.setTextAlignment(TextAlignment.CENTER);
             
             modeBox.getChildren().addAll(title, adminBtn, userBtn);
             
@@ -57,7 +63,55 @@ public class QMillionaireMVC extends Application {
         splash.show();
     }
     
+    // This is exclusively for later returns to the main selection screen.
+    private void showModeSelection(Stage primaryStage) {
+        VBox modeBox = new VBox(40);
+        modeBox.setAlignment(Pos.CENTER);
+        modeBox.setStyle("-fx-background-color: linear-gradient(to bottom, #1a0b2e, #000022);");
+
+        Label title = new Label("SELECT GAME MODE");
+        title.setStyle("-fx-font-size: 36px; -fx-font-weight: bold; -fx-text-fill: #d4af37;");
+
+        Button adminBtn = new Button(" ADMIN MODE\nManage Questions");
+        adminBtn.getStyleClass().addAll("answer-btn");
+        adminBtn.setPrefSize(400, 120);
+        adminBtn.setStyle("-fx-font-size: 20px;");
+        adminBtn.setAlignment(Pos.CENTER);
+        adminBtn.setTextAlignment(TextAlignment.CENTER);
+
+        Button userBtn = new Button("PLAYER MODE\nPlay Quantum Millionaire");
+        userBtn.getStyleClass().addAll("answer-btn");
+        userBtn.setPrefSize(400, 120);
+        userBtn.setStyle("-fx-font-size: 20px;");
+        userBtn.setAlignment(Pos.CENTER);
+        userBtn.setTextAlignment(TextAlignment.CENTER);
+
+        modeBox.getChildren().addAll(title, adminBtn, userBtn);
+
+        Scene modeScene = new Scene(modeBox, 1280, 720);
+        addCSS(modeScene);
+
+        adminBtn.setOnAction(e -> showAdminScreen(primaryStage));
+        userBtn.setOnAction(e -> showPlayerMenu(primaryStage));
+
+        primaryStage.setScene(modeScene);
+    }
+
+    
     private void showAdminScreen(Stage primaryStage) {
+        AdminMenuView view = new AdminMenuView();
+
+        view.getManageQuestionsBtn().setOnAction(e -> showQuestionManager(primaryStage));
+        view.getManageUsersBtn().setOnAction(e -> showAdminUserList(primaryStage));
+        view.getBackBtn().setOnAction(e -> showModeSelection(primaryStage));  // To (return specialized) mode selection.
+
+        Scene scene = new Scene(view, 1280, 720);
+        addCSS(scene);
+        primaryStage.setTitle("Quantum Millionaire - Admin Panel");
+        primaryStage.setScene(scene);
+    }
+    
+    private void showQuestionManager(Stage primaryStage) {
         QModeSelectionModel adminModel = new QModeSelectionModel();
         QModeSelectionView adminView = new QModeSelectionView();
         new QModeSelectionController(adminModel, adminView); 
@@ -86,7 +140,7 @@ public class QMillionaireMVC extends Application {
             // Set lifelines based on their use state
             gameModel.setSuperpositionUsed(u.isSuperpositionUsed());
             gameModel.setEntanglementUsed(u.isEntanglementUsed());
-            //gameModel.setThirdLifeLineUsed(u.isThirdLifeLineUsed());
+            gameModel.setInterferenceUsed(u.isInterferenceUsed());
         }
         QView gameView = new QView();
         new QController(gameModel, gameView, session, userManager);
@@ -103,9 +157,43 @@ public class QMillionaireMVC extends Application {
         view.getNewGameBtn().setOnAction(e -> showNewProfileScreen(primaryStage));
         view.getLoadGameBtn().setOnAction(e -> showLoadProfileScreen(primaryStage));
         view.getQuitBtn().setOnAction(e -> primaryStage.close());
+        view.getBackBtn().setOnAction(e -> showModeSelection(primaryStage));
+
 
         Scene scene = new Scene(view, 1280, 720);
         addCSS(scene);
+        primaryStage.setScene(scene);
+    }
+
+    private void showAdminUserList(Stage primaryStage) {
+        ProfileSelectionView view = new ProfileSelectionView();
+        AdminUserController controller = new AdminUserController(userManager);
+
+        controller.wireUserList(
+                view,
+                user -> showAdminUserEditor(primaryStage, user),
+                () -> showAdminScreen(primaryStage),
+                () -> showAdminNewUser(primaryStage)
+        );
+
+        Scene scene = new Scene(view, 1280, 720);
+        addCSS(scene);
+        primaryStage.setTitle("Admin - Manage Users");
+        primaryStage.setScene(scene);
+    }
+
+    private void showAdminNewUser(Stage primaryStage) {
+        NewProfileView view = new NewProfileView();
+
+        profileController.wireNewProfileScreen(
+                view,
+                user -> showAdminUserList(primaryStage),
+                () -> showAdminUserList(primaryStage)
+        );
+
+        Scene scene = new Scene(view, 1280, 720);
+        addCSS(scene);
+        primaryStage.setTitle("Admin - New User");
         primaryStage.setScene(scene);
     }
 
@@ -142,6 +230,76 @@ public class QMillionaireMVC extends Application {
         Scene scene = new Scene(view, 1280, 720);
         addCSS(scene);
         primaryStage.setScene(scene);
+    }
+
+    private void showAdminUserEditor(Stage primaryStage, Pack_1.profile.User user) {
+        AdminUserEditorView view = new AdminUserEditorView(user);
+
+        view.getSaveBtn().setOnAction(e -> {
+            try {
+                user.setUsername(view.getUsernameField().getText().trim());
+                user.setCurrentTier(Integer.parseInt(view.getCurrentTierField().getText()));
+                user.setHighestTierReached(Integer.parseInt(view.getHighestTierField().getText()));
+                user.setLastGameMoney(Integer.parseInt(view.getLastGameMoneyField().getText()));
+                user.setTotalMoneyEarned(Integer.parseInt(view.getTotalMoneyField().getText()));
+                user.setGamesWon(Integer.parseInt(view.getGamesWonField().getText()));
+                user.setGamesLost(Integer.parseInt(view.getGamesLostField().getText()));
+                user.setSuperpositionUsed(view.getSuperUsedBox().isSelected());
+                user.setEntanglementUsed(view.getEntUsedBox().isSelected());
+                user.setInterferenceUsed(view.getInterfUsedBox().isSelected());
+                user.setLifelinesUsed(Integer.parseInt(view.getLifelinesUsedField().getText()));
+                user.setTotalLifelinesUsed(Integer.parseInt(view.getTotalLifelinesField().getText()));
+
+                userManagerSaveAll(); 
+                showAdminUserList(primaryStage);
+            } catch (NumberFormatException ex) {
+                // you can add a small error label or dialog here
+            }
+        });
+
+        view.getCancelBtn().setOnAction(e -> showAdminUserList(primaryStage));
+
+        view.getResetProgressBtn().setOnAction(e -> {
+            user.setCurrentTier(0);
+            user.setLastGameMoney(0);
+            view.getCurrentTierField().setText("0");
+            view.getLastGameMoneyField().setText("0");
+        });
+
+        view.getResetLifelinesBtn().setOnAction(e -> {
+            user.setSuperpositionUsed(false);
+            user.setEntanglementUsed(false);
+            user.setInterferenceUsed(false);
+            user.setLifelinesUsed(0);
+
+            view.getSuperUsedBox().setSelected(false);
+            view.getEntUsedBox().setSelected(false);
+            view.getInterfUsedBox().setSelected(false);
+            view.getLifelinesUsedField().setText("0");
+        });
+
+        view.getResetStatsBtn().setOnAction(e -> {
+            user.setTotalMoneyEarned(0);
+            user.setGamesWon(0);
+            user.setGamesLost(0);
+            user.setHighestTierReached(0);
+            user.setTotalLifelinesUsed(0);
+            view.getTotalMoneyField().setText("0");
+            view.getGamesWonField().setText("0");
+            view.getGamesLostField().setText("0");
+            view.getHighestTierField().setText("0");
+            view.getTotalLifelinesField().setText("0");
+        });
+
+        Scene scene = new Scene(view, 1280, 720);
+        addCSS(scene);
+        primaryStage.setTitle("Admin - Edit User");
+        primaryStage.setScene(scene);
+    }
+
+    // Wrapper class to access private data
+    private void userManagerSaveAll() {
+        userManager.saveAllUsers();
     }
 
     private void addCSS(Scene scene) {

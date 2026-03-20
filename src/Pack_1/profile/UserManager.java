@@ -45,18 +45,21 @@ public class UserManager {
     		int currentTier,
     		boolean superUsed,
     		boolean entUsed,
+    		boolean interfUsed,
     		int currentGameMoney) {
 
     	// Always update these mid‑game
     	user.setCurrentTier(currentTier);
     	user.setSuperpositionUsed(superUsed);
     	user.setEntanglementUsed(entUsed);
+    	user.setInterferenceUsed(interfUsed);
     	user.setLastPlayed(LocalDateTime.now());
 
     	// Running lifeline count
     	int count = 0;
     	if (superUsed) count++;
     	if (entUsed) count++;
+    	if (interfUsed) count ++;
     	user.setLifelinesUsed(count);
 
     	// Dynamic money
@@ -85,6 +88,10 @@ public class UserManager {
         userStore.saveUsers(users);
     }
 
+    public void saveAllUsers() {
+        saveUsers();
+    }
+
     private void saveStats() {
         statsStore.saveStats(stats);
     }
@@ -111,6 +118,7 @@ public class UserManager {
         int used = 0;
         if (model.isSuperpositionUsed()) used++;
         if (model.isEntanglementUsed()) used++;
+        if (model.isInterferenceUsed()) used++;
 
         // Lifetime lifelines only updated here
         user.setTotalLifelinesUsed(user.getTotalLifelinesUsed() + used);
@@ -125,6 +133,7 @@ public class UserManager {
         // Reset lifelines for next run
         user.setSuperpositionUsed(false);
         user.setEntanglementUsed(false);
+        user.setInterferenceUsed(false);
         user.setLifelinesUsed(0);
 
         saveUsers();

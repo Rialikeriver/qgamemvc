@@ -11,6 +11,7 @@ public class PlayerMenuView extends BorderPane {
     private Button newGameBtn;
     private Button loadGameBtn;
     private Button quitBtn;
+    private Button backBtn;
 
     public PlayerMenuView() {
         setupUI();
@@ -29,12 +30,15 @@ public class PlayerMenuView extends BorderPane {
         newGameBtn = new Button("New Game");
         loadGameBtn = new Button("Load Game");
         quitBtn = new Button("Quit");
+        backBtn = new Button("Back");
+        backBtn.getStyleClass().add("answer-btn");
 
         newGameBtn.getStyleClass().add("answer-btn");
         loadGameBtn.getStyleClass().add("answer-btn");
         quitBtn.getStyleClass().add("answer-btn");
-
-        VBox centerBox = new VBox(20, newGameBtn, loadGameBtn, quitBtn);
+        backBtn.getStyleClass().add("answer-btn");
+        
+        VBox centerBox = new VBox(20, newGameBtn, loadGameBtn, quitBtn, backBtn);
         centerBox.setAlignment(Pos.CENTER);
         this.setCenter(centerBox);
     }
@@ -42,4 +46,6 @@ public class PlayerMenuView extends BorderPane {
     public Button getNewGameBtn() { return newGameBtn; }
     public Button getLoadGameBtn() { return loadGameBtn; }
     public Button getQuitBtn() { return quitBtn; }
+    public Button getBackBtn() { return backBtn; }
+
 }

@@ -156,6 +156,7 @@ public class QModel {
     
     public boolean isGameOver() { return gameOver; }
     public boolean isPlayerWon() { return playerWon; }
+    
     public int getMoneyEarned() { return moneyEarned; }
     public int getGuaranteedMoney() { return guaranteedMoney; }
 

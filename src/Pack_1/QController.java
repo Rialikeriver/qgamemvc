@@ -58,6 +58,12 @@ public class QController {
         timer.play();
     }
 
+    private void resumeCountdown() {
+        if (timer != null) {
+            timer.play();
+        }
+    }
+    
     private void handleAnswer(String label) {
         timer.stop();
 
@@ -97,17 +103,27 @@ public class QController {
         view.getSuperpositionBtn().setDisable(true);
         view.getEntanglementBtn().setDisable(true);
         view.getInterferenceBtn().setDisable(true);
-
-        view.getQuestionLabel().setText(message);
+        
+        timer.stop();
         view.getTimerLabel().setText("--");
         view.getTimerLabel().setStyle("-fx-text-fill: gray; -fx-font-size: 40px;");
 
-        Platform.runLater(() -> {
-            Alert alert = new Alert(AlertType.INFORMATION);
-            alert.setTitle("Game Over");
-            alert.setHeaderText(null);
-            alert.setContentText(message);
-            alert.showAndWait();
+        GameOverlayView overlay = new GameOverlayView(
+                "GAME OVER",
+                message,
+                false
+        );
+
+        view.showOverlay(overlay);
+
+        overlay.getPrimaryBtn().setOnAction(e -> {
+            view.hideOverlay(overlay);
+            model.resetGame();
+            updateDisplay();
+        });
+
+        overlay.getSecondaryBtn().setOnAction(e -> {
+            Platform.exit();
         });
     }
 
@@ -123,19 +139,31 @@ public class QController {
     }
 
     private void handleInterference() {
+        timer.stop();
+
         Answer suggested = model.applyInterference();
         if (suggested != null) {
             model.setInterferenceUsed(true);
-            String message = "Constructive Interference suggests: " + suggested.getLabel();
-            
-            Alert alert = new Alert(AlertType.INFORMATION);
-            alert.setTitle("Quantum Interference");
-            alert.setHeaderText("Probability Wave Measured");
-            alert.setContentText(message);
-            alert.showAndWait();
 
+            String title = "Quantum Interference";
+            String header = "Probability Wave Measured";
+            String message = "Constructive Interference suggests: " + suggested.getLabel();
+
+            MiniPopupView popup = new MiniPopupView(
+                    title,
+                    header,
+                    message,
+                    false // only OK button
+            );
+
+            view.showOverlay(popup);
             view.getInterferenceBtn().setDisable(true);
             updateProgressInStore();
+
+            popup.getPrimaryBtn().setOnAction(e -> {
+                view.hideOverlay(popup);
+                resumeCountdown();
+            });
         }
     }
 
@@ -164,8 +192,7 @@ public class QController {
                     model.getCurrentQuestionIndex(),
                     model.isSuperpositionUsed(),
                     model.isEntanglementUsed(),
-                    // Note: If your UserManager doesn't support a 3rd lifeline param yet, 
-                    // you might need to update that method's signature later.
+                    model.isInterferenceUsed(),
                     model.getCurrentCashMoney()
             );
         }
@@ -222,23 +249,28 @@ public class QController {
     }
 
     private void handleGameOver() {
+    	timer.stop();
+
         if (session.hasUser()) {
             userManager.recordGameResult(session.getCurrentUser(), model);
         }
 
-        Alert alert = new Alert(AlertType.INFORMATION);
-        alert.setTitle("Game Over");
-        alert.setHeaderText(model.isPlayerWon() ? "You Won!" : "Game Over");
-        alert.setContentText("You earned: $" + model.getMoneyEarned());
+        GameOverlayView overlay = new GameOverlayView(
+                model.isPlayerWon() ? "YOU WON!" : "GAME OVER",
+                "You earned: $" + model.getMoneyEarned(),
+                model.isPlayerWon()
+        );
 
-        ButtonType playAgain = new ButtonType("Play Again");
-        ButtonType quit = new ButtonType("Quit");
-        alert.getButtonTypes().setAll(playAgain, quit);
+        view.showOverlay(overlay);
 
-        Optional<ButtonType> result = alert.showAndWait();
-        if (result.isPresent() && result.get() == playAgain) {
+        overlay.getPrimaryBtn().setOnAction(e -> {
+            view.hideOverlay(overlay);
             model.resetGame();
             updateDisplay();
-        }
+        });
+
+        overlay.getSecondaryBtn().setOnAction(e -> {
+            Platform.exit();
+        });
     }
 }

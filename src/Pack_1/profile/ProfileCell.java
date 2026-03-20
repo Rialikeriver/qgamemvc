@@ -37,7 +37,7 @@ public class ProfileCell extends ListCell<User> {
         lastPlayedLbl.setStyle("-fx-text-fill: white;");
 
         // Tier
-        Label tierLbl = new Label("Highest Tier: " + (user.getHighestTierReached() + 1));
+        Label tierLbl = new Label("Current Tier: " + (user.getCurrentTier() + 1));
         tierLbl.setStyle("-fx-text-fill: white;");
 
         VBox colA = new VBox(2, lastPlayedLbl, tierLbl);
