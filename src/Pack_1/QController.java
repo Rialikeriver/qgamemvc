@@ -317,12 +317,28 @@ public class QController {
      */
     private void showSettingsMenu() {
         ContextMenu settingsMenu = new ContextMenu();
+        
+        // --- 1. Languages Menu ---
         Menu langMenu = new Menu("Languages");
         MenuItem en = new MenuItem("English");
         MenuItem fa = new MenuItem("Farsi");
-
         langMenu.getItems().addAll(en, fa);
 
+        // --- 2. Themes Menu (RESTORED) ---
+        Menu themeMenu = new Menu("Themes & Accessibility");
+        MenuItem modern = new MenuItem("Modern Style");
+        MenuItem classic = new MenuItem("Classic Style");
+        MenuItem deuteranopia = new MenuItem("Deuteranopia (Red-Green)");
+        MenuItem tritanopia = new MenuItem("Tritanopia (Blue-Yellow)");
+        themeMenu.getItems().addAll(modern, classic, new SeparatorMenuItem(), deuteranopia, tritanopia);
+
+        // --- Action Handlers for Themes ---
+        modern.setOnAction(e -> view.applyTheme("modern-style"));
+        classic.setOnAction(e -> view.applyTheme("classic-style"));
+        deuteranopia.setOnAction(e -> view.applyTheme("theme-deuteranopia"));
+        tritanopia.setOnAction(e -> view.applyTheme("theme-tritanopia"));
+
+        // --- Action Handlers for Languages (Keep your existing logic) ---
         fa.setOnAction(e -> {
             List<Question> farsi = Database.QuestionLoader.loadQuestions("BeMillionaireQuestionsfa.json");
             if (farsi != null && !farsi.isEmpty()) {
@@ -343,10 +359,10 @@ public class QController {
             }
         });
 
-        settingsMenu.getItems().add(langMenu);
+        // Add both menus to the main settings diamond
+        settingsMenu.getItems().addAll(langMenu, themeMenu);
         settingsMenu.show(view.getMenuDiamond(), Side.BOTTOM, 0, 0);
     }
-
     /**
      * Handles the win state: records results, shows the overlay, and wires
      * Play Again / Quit actions.
