@@ -21,12 +21,18 @@ public class GameOverlayView extends StackPane {
     private final Button primaryBtn;
     private final Button secondaryBtn;
 
-    public GameOverlayView(String title, String amountRaw, boolean isWin) {
+    public GameOverlayView(String title, String subtitle, String amountRaw, boolean isWin) {
 
         setStyle("-fx-background-color: rgba(0,0,0,0.75);");
 
         Label titleLbl = new Label(title);
         titleLbl.setStyle("-fx-font-size: 72px; -fx-text-fill: #d4af37; -fx-font-weight: bold;");
+
+        Label subtitleLbl = new Label(subtitle);
+        subtitleLbl.setStyle("-fx-font-size: 32px; -fx-text-fill: white;");
+        subtitleLbl.setWrapText(true);
+        subtitleLbl.setAlignment(Pos.CENTER);
+        subtitleLbl.setMaxWidth(800);
 
         // Format money with commas
         int amountInt = 0;
@@ -40,7 +46,6 @@ public class GameOverlayView extends StackPane {
         VBox box = new VBox(40);
         box.setAlignment(Pos.CENTER);
 
-        // WIN LAYOUT
         if (isWin) {
             Label earnedLbl = new Label("You earned:");
             earnedLbl.setStyle("-fx-font-size: 40px; -fx-text-fill: white;");
@@ -48,20 +53,16 @@ public class GameOverlayView extends StackPane {
             Label amountLbl = new Label(moneyText);
             amountLbl.setStyle("-fx-font-size: 72px; -fx-text-fill: #d4af37; -fx-font-weight: bold;");
 
-            box.getChildren().addAll(titleLbl, earnedLbl, amountLbl);
-
+            box.getChildren().addAll(titleLbl, subtitleLbl, earnedLbl, amountLbl);
             addConfetti();
-        }
-
-        // LOSS LAYOUT
-        else {
+        } else {
             Label lossLbl = new Label("You earned " + moneyText);
             lossLbl.setStyle("-fx-font-size: 32px; -fx-text-fill: white; -fx-font-weight: bold;");
             lossLbl.setWrapText(true);
             lossLbl.setMaxWidth(800);
             lossLbl.setAlignment(Pos.CENTER);
 
-            box.getChildren().addAll(titleLbl, lossLbl);
+            box.getChildren().addAll(titleLbl, subtitleLbl, lossLbl);
         }
 
         primaryBtn = new Button("Play Again");
@@ -74,6 +75,7 @@ public class GameOverlayView extends StackPane {
 
         getChildren().add(box);
     }
+
 
     private void addConfetti() {
         Random r = new Random();

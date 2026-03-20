@@ -103,29 +103,42 @@ public class QController {
         view.getSuperpositionBtn().setDisable(true);
         view.getEntanglementBtn().setDisable(true);
         view.getInterferenceBtn().setDisable(true);
-        
+
         timer.stop();
         view.getTimerLabel().setText("--");
         view.getTimerLabel().setStyle("-fx-text-fill: gray; -fx-font-size: 40px;");
 
+        // NEW: record failure result (guaranteed money, loss, lifelines, totals)
+        if (session.hasUser()) {
+            userManager.recordGameResult(session.getCurrentUser(), model);
+        }
+
         GameOverlayView overlay = new GameOverlayView(
                 "GAME OVER",
-                message,
+                "YOUR JOURNEY ENDS HERE",
+                String.valueOf(model.getGuaranteedMoney()),
                 false
         );
 
         view.showOverlay(overlay);
 
+        // Play Again
         overlay.getPrimaryBtn().setOnAction(e -> {
             view.hideOverlay(overlay);
             model.resetGame();
             updateDisplay();
         });
 
+        // Quit (reset + save)
         overlay.getSecondaryBtn().setOnAction(e -> {
+            if (session.hasUser()) {
+                userManager.finalizeGame(session.getCurrentUser(), model);
+            }
+            model.resetGame();
             Platform.exit();
         });
     }
+
 
     private void attachEvents() {
         view.getBtnA().setOnAction(e -> handleAnswer("A"));
@@ -193,7 +206,7 @@ public class QController {
                     model.isSuperpositionUsed(),
                     model.isEntanglementUsed(),
                     model.isInterferenceUsed(),
-                    model.getCurrentCashMoney()
+                    model.getLastEarnedMoney() 
             );
         }
     }
@@ -249,27 +262,36 @@ public class QController {
     }
 
     private void handleGameOver() {
-    	timer.stop();
+        timer.stop();
 
         if (session.hasUser()) {
             userManager.recordGameResult(session.getCurrentUser(), model);
         }
 
+        // Correct money (1,000,000 on win, guaranteed money on loss)
         GameOverlayView overlay = new GameOverlayView(
-                model.isPlayerWon() ? "YOU WON!" : "GAME OVER",
-                "You earned: $" + model.getMoneyEarned(),
+                model.isPlayerWon() ? "YOU WON!" : "YOU HAVE FAILED!",
+                model.isPlayerWon() ? "CONGRATULATIONS!" : "BE DESTITUTE",
+                String.valueOf(model.getLastEarnedMoney()),
                 model.isPlayerWon()
         );
 
+
         view.showOverlay(overlay);
 
+        // Play Again
         overlay.getPrimaryBtn().setOnAction(e -> {
             view.hideOverlay(overlay);
             model.resetGame();
             updateDisplay();
         });
 
+        // Quit (reset + save)
         overlay.getSecondaryBtn().setOnAction(e -> {
+            if (session.hasUser()) {
+                userManager.finalizeGame(session.getCurrentUser(), model);
+            }
+            model.resetGame();
             Platform.exit();
         });
     }

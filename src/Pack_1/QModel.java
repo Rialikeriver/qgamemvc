@@ -23,6 +23,7 @@ public class QModel {
     private boolean gameOver = false;			
     private boolean playerWon = false;
     private int moneyEarned = 0;
+    private int lastEarnedMoney = 0;
     private int guaranteedMoney = 0;
 
     // Lifeline state
@@ -70,13 +71,19 @@ public class QModel {
 
     public void nextQuestion() {
         if (gameOver) return;
+
+        // Earn money for the current tier BEFORE moving to the next
+        lastEarnedMoney = PRIZE_VALUES[currentQuestionIndex];
+
         updateMoneyAndCheckWin();
         if (gameOver) return;
+
         currentQuestionIndex++;
         if (currentQuestionIndex >= PRIZE_VALUES.length) {
             currentQuestionIndex = PRIZE_VALUES.length - 1;
         }
     }
+
 
     public int getCurrentCashMoney() {
         int tier = getCurrentQuestionIndex();
@@ -108,6 +115,7 @@ public class QModel {
         this.gameOver = false;
         this.playerWon = false;
         this.moneyEarned = 0;
+        this.lastEarnedMoney = 0;
         this.guaranteedMoney = 0;
         this.superpositionUsed = false;
         this.entanglementUsed = false;
@@ -158,6 +166,7 @@ public class QModel {
     public boolean isPlayerWon() { return playerWon; }
     
     public int getMoneyEarned() { return moneyEarned; }
+    public int getLastEarnedMoney() { return lastEarnedMoney; }
     public int getGuaranteedMoney() { return guaranteedMoney; }
 
     public boolean isSuperpositionUsed() { return superpositionUsed; }

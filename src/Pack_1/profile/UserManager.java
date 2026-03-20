@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import Pack_1.QModel;
+
 public class UserManager {
     private final UserStore userStore;
     private final StatsStore statsStore;
@@ -102,7 +104,7 @@ public class UserManager {
         user.setLastPlayed(LocalDateTime.now());
 
         int finalTier = model.getCurrentQuestionIndex();
-        int finalMoney = model.getMoneyEarned();
+        int finalMoney = Math.max(model.getLastEarnedMoney(), model.getGuaranteedMoney());
 
         user.setCurrentTier(0);
         user.setLastGameMoney(0);
@@ -136,6 +138,23 @@ public class UserManager {
         user.setInterferenceUsed(false);
         user.setLifelinesUsed(0);
 
+        saveUsers();
+    }
+
+ // UserManager.java
+    public void finalizeGame(User user, QModel model) {
+        if (user == null || model == null) return;
+
+        // Reset mid‑game fields ONLY
+        user.setCurrentTier(0);
+        user.setLastGameMoney(0);
+
+        user.setSuperpositionUsed(false);
+        user.setEntanglementUsed(false);
+        user.setInterferenceUsed(false);
+        user.setLifelinesUsed(0);
+
+        user.setLastPlayed(LocalDateTime.now());
         saveUsers();
     }
 
