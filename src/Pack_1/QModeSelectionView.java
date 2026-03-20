@@ -21,7 +21,7 @@ public class QModeSelectionView extends BorderPane {
         this.setStyle("-fx-background-color: linear-gradient(to bottom, #1a0b2e, #000022);");
         this.setPadding(new Insets(20));
         
-        titleLabel = new Label("🛠️ ADMIN PANEL - Question Manager");
+        titleLabel = new Label("️ ADMIN PANEL - Question Manager");
         titleLabel.setStyle("-fx-font-size: 32px; -fx-font-weight: bold; -fx-text-fill: #d4af37;");
         this.setTop(titleLabel);
         

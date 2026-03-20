@@ -8,7 +8,7 @@ import java.util.*;
 
 public class QView extends BorderPane {
     protected Label questionLabel, timerLabel;
-    protected Button btnA, btnB, btnC, btnD, superpositionBtn, entanglementBtn, menuDiamond;
+    protected Button btnA, btnB, btnC, btnD, superpositionBtn, entanglementBtn, menuDiamond, interferenceBtn;
     protected VBox moneyLadder;
     
     public QView() {
@@ -69,8 +69,12 @@ public class QView extends BorderPane {
         superpositionBtn.getStyleClass().add("answer-btn");
         entanglementBtn = new Button("ENTANGLEMENT");
         entanglementBtn.getStyleClass().add("answer-btn");
+        
+        interferenceBtn = new Button("INTERFERENCE"); //^
+        interferenceBtn.getStyleClass().add("answer-btn");
+        
 
-        HBox lifelineBox = new HBox(20, superpositionBtn, entanglementBtn);
+        HBox lifelineBox = new HBox(20, superpositionBtn, entanglementBtn, interferenceBtn);
         lifelineBox.setAlignment(Pos.CENTER);
 
         centerBox.getChildren().addAll(questionLabel, grid, lifelineBox);
@@ -147,7 +151,9 @@ public class QView extends BorderPane {
     public Button getBtnD() { return btnD; }
     public Button getSuperpositionBtn() { return superpositionBtn; }
     public Button getEntanglementBtn() { return entanglementBtn; }
+    public Button getInterferenceBtn() { return interferenceBtn; }
     public Button getMenuDiamond() { return menuDiamond; }
     public Label getTimerLabel() { return timerLabel; }
     public Label getQuestionLabel() { return questionLabel; }
+    
 }

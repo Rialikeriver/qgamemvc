@@ -70,16 +70,7 @@ public class QController {
 
         if (isCorrect) {
             model.nextQuestion();
-
-            if (session.hasUser()) {
-                userManager.updateUserProgress(
-                        session.getCurrentUser(),
-                        model.getCurrentQuestionIndex(),
-                        model.isSuperpositionUsed(),
-                        model.isEntanglementUsed(),
-                        model.getCurrentCashMoney()
-                );
-            }
+            updateProgressInStore(); // Helper method added below
 
             if (model.isGameOver()) {
                 updateDisplay();
@@ -105,6 +96,7 @@ public class QController {
         view.getBtnD().setDisable(true);
         view.getSuperpositionBtn().setDisable(true);
         view.getEntanglementBtn().setDisable(true);
+        view.getInterferenceBtn().setDisable(true);
 
         view.getQuestionLabel().setText(message);
         view.getTimerLabel().setText("--");
@@ -126,7 +118,25 @@ public class QController {
         view.getBtnD().setOnAction(e -> handleAnswer("D"));
         view.getSuperpositionBtn().setOnAction(e -> handleSuperposition());
         view.getEntanglementBtn().setOnAction(e -> handleEntanglement());
+        view.getInterferenceBtn().setOnAction(e -> handleInterference());
         view.getMenuDiamond().setOnAction(e -> showSettingsMenu());
+    }
+
+    private void handleInterference() {
+        Answer suggested = model.applyInterference();
+        if (suggested != null) {
+            model.setInterferenceUsed(true);
+            String message = "Constructive Interference suggests: " + suggested.getLabel();
+            
+            Alert alert = new Alert(AlertType.INFORMATION);
+            alert.setTitle("Quantum Interference");
+            alert.setHeaderText("Probability Wave Measured");
+            alert.setContentText(message);
+            alert.showAndWait();
+
+            view.getInterferenceBtn().setDisable(true);
+            updateProgressInStore();
+        }
     }
 
     private void handleSuperposition() {
@@ -135,16 +145,7 @@ public class QController {
             view.disableAnswers(toDisable);
             view.getSuperpositionBtn().setDisable(true);
             model.setSuperpositionUsed(true);
-
-            if (session.hasUser()) {
-                userManager.updateUserProgress(
-                        session.getCurrentUser(),
-                        model.getCurrentQuestionIndex(),
-                        model.isSuperpositionUsed(),
-                        model.isEntanglementUsed(),
-                        model.getCurrentCashMoney()
-                );
-            }
+            updateProgressInStore();
         }
     }
 
@@ -152,13 +153,19 @@ public class QController {
         model.applyEntanglement();
         view.getEntanglementBtn().setDisable(true);
         model.setEntanglementUsed(true);
+        updateProgressInStore();
+    }
 
+    // Helper to avoid repeating userManager calls
+    private void updateProgressInStore() {
         if (session.hasUser()) {
             userManager.updateUserProgress(
                     session.getCurrentUser(),
                     model.getCurrentQuestionIndex(),
                     model.isSuperpositionUsed(),
                     model.isEntanglementUsed(),
+                    // Note: If your UserManager doesn't support a 3rd lifeline param yet, 
+                    // you might need to update that method's signature later.
                     model.getCurrentCashMoney()
             );
         }
@@ -173,6 +180,7 @@ public class QController {
 
             view.getSuperpositionBtn().setDisable(model.isSuperpositionUsed());
             view.getEntanglementBtn().setDisable(model.isEntanglementUsed());
+            view.getInterferenceBtn().setDisable(model.isInterferenceUsed()); //interference
 
             startCountdown();
         } else {
@@ -183,7 +191,6 @@ public class QController {
 
     private void showSettingsMenu() {
         ContextMenu settingsMenu = new ContextMenu();
-
         Menu langMenu = new Menu("Languages");
         MenuItem en = new MenuItem("English");
         MenuItem fa = new MenuItem("Farsi");
@@ -221,18 +228,11 @@ public class QController {
 
         Alert alert = new Alert(AlertType.INFORMATION);
         alert.setTitle("Game Over");
-
-        if (model.isPlayerWon()) {
-            alert.setHeaderText("You Won!");
-        } else {
-            alert.setHeaderText("Game Over");
-        }
-
+        alert.setHeaderText(model.isPlayerWon() ? "You Won!" : "Game Over");
         alert.setContentText("You earned: $" + model.getMoneyEarned());
 
         ButtonType playAgain = new ButtonType("Play Again");
         ButtonType quit = new ButtonType("Quit");
-
         alert.getButtonTypes().setAll(playAgain, quit);
 
         Optional<ButtonType> result = alert.showAndWait();
