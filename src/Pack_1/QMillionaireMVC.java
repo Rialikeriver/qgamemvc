@@ -33,6 +33,10 @@ public class QMillionaireMVC extends Application {
      * Initializes persistent stores, session state, and shows the splash screen.
      * After the splash completes, the user is taken to the mode selection screen.
      */
+    /**
+     * Initializes persistent stores, session state, and shows the splash screen.
+     * After the splash completes, the user is taken to the mode selection screen.
+     */
     @Override
     public void start(Stage primaryStage) {
         userManager = new Pack_1.profile.UserManager(
@@ -42,81 +46,49 @@ public class QMillionaireMVC extends Application {
         session = new Pack_1.profile.Session();
         profileController = new ProfileController(userManager);
 
+        // When the splash screen ends, we call showModeSelection
         QSplash splash = new QSplash(() -> {
-            VBox modeBox = new VBox(40);
-            modeBox.setAlignment(Pos.CENTER);
-            modeBox.setStyle("-fx-background-color: linear-gradient(to bottom, #1a0b2e, #000022);");
-
-            Label title = new Label("SELECT GAME MODE");
-            title.setStyle("-fx-font-size: 36px; -fx-font-weight: bold; -fx-text-fill: #d4af37;");
-
-            Button adminBtn = new Button("ADMIN MODE\nManage Questions");
-            adminBtn.getStyleClass().addAll("answer-btn");
-            adminBtn.setPrefSize(400, 120);
-            adminBtn.setStyle("-fx-font-size: 20px;");
-            adminBtn.setAlignment(Pos.CENTER);
-            adminBtn.setTextAlignment(TextAlignment.CENTER);
-
-            Button userBtn = new Button("PLAYER MODE\nPlay Quantum Millionaire");
-            userBtn.getStyleClass().addAll("answer-btn");
-            userBtn.setPrefSize(400, 120);
-            userBtn.setStyle("-fx-font-size: 20px;");
-            userBtn.setAlignment(Pos.CENTER);
-            userBtn.setTextAlignment(TextAlignment.CENTER);
-
-            modeBox.getChildren().addAll(title, adminBtn, userBtn);
-
-            Scene modeScene = new Scene(modeBox, 1280, 720);
-            addCSS(modeScene);
-            primaryStage.setTitle("Quantum Millionaire - Select Mode");
-            primaryStage.setScene(modeScene);
-
-            adminBtn.setOnAction(e -> showAdminScreen(primaryStage));
-            userBtn.setOnAction(e -> showPlayerMenu(primaryStage));
-
+            showModeSelection(primaryStage); 
             primaryStage.show();
         });
 
         splash.show();
     }
+    
 
     /**
      * Rebuilds and displays the mode selection screen. Used when returning
      * from admin or player menus.
      */
     private void showModeSelection(Stage primaryStage) {
-        VBox modeBox = new VBox(40);
+        VBox modeBox = new VBox(30); // Tightened spacing for 3 buttons
         modeBox.setAlignment(Pos.CENTER);
         modeBox.setStyle("-fx-background-color: linear-gradient(to bottom, #1a0b2e, #000022);");
 
         Label title = new Label("SELECT GAME MODE");
         title.setStyle("-fx-font-size: 36px; -fx-font-weight: bold; -fx-text-fill: #d4af37;");
 
-        Button adminBtn = new Button(" ADMIN MODE\nManage Questions");
-        adminBtn.getStyleClass().addAll("answer-btn");
-        adminBtn.setPrefSize(400, 120);
-        adminBtn.setStyle("-fx-font-size: 20px;");
-        adminBtn.setAlignment(Pos.CENTER);
-        adminBtn.setTextAlignment(TextAlignment.CENTER);
+        // --- EXISTING BUTTONS ---
+        Button adminBtn = createModeButton("ADMIN MODE\nManage Questions");
+        Button userBtn = createModeButton("PLAYER MODE\nPlay Quantum Millionaire");
 
-        Button userBtn = new Button("PLAYER MODE\nPlay Quantum Millionaire");
-        userBtn.getStyleClass().addAll("answer-btn");
-        userBtn.setPrefSize(400, 120);
-        userBtn.setStyle("-fx-font-size: 20px;");
-        userBtn.setAlignment(Pos.CENTER);
-        userBtn.setTextAlignment(TextAlignment.CENTER);
+        // --- NEW MULTIPLAYER BUTTON ---
+        Button multiBtn = createModeButton("MULTIPLAYER MODE\nConnect & Chat");
+        multiBtn.setStyle("-fx-font-size: 20px; -fx-border-color: #00ff00;"); // Green border to distinguish it
 
-        modeBox.getChildren().addAll(title, adminBtn, userBtn);
+        modeBox.getChildren().addAll(title, adminBtn, userBtn, multiBtn);
 
         Scene modeScene = new Scene(modeBox, 1280, 720);
         addCSS(modeScene);
 
         adminBtn.setOnAction(e -> showAdminScreen(primaryStage));
         userBtn.setOnAction(e -> showPlayerMenu(primaryStage));
+        
+        // Wire the new button to the Network Setup
+        multiBtn.setOnAction(e -> showNetworkSetup(primaryStage));
 
         primaryStage.setScene(modeScene);
     }
-
     /**
      * Shows the admin panel with options to manage questions or users.
      */
@@ -361,6 +333,35 @@ public class QMillionaireMVC extends Application {
         }
     }
 
+  
+
+    /**
+     * Helper to keep button styling consistent
+     */
+    private Button createModeButton(String text) {
+        Button b = new Button(text);
+        b.getStyleClass().addAll("answer-btn");
+        b.setPrefSize(400, 100);
+        b.setAlignment(Pos.CENTER);
+        b.setTextAlignment(TextAlignment.CENTER);
+        return b;
+    }
+
+    /**
+     * NEW METHOD: Shows the Network Connection screen
+     */
+    private void showNetworkSetup(Stage primaryStage) {
+        Network.MP_ConnectionView view = new Network.MP_ConnectionView();
+        new Network.MP_ConnectionController(view); // Controller handles logic
+
+        // Add a back button action to return to mode selection
+        view.getBackBtn().setOnAction(e -> showModeSelection(primaryStage));
+
+        Scene scene = new Scene(view, 1280, 720);
+        addCSS(scene);
+        primaryStage.setTitle("Quantum Millionaire - Network Setup");
+        primaryStage.setScene(scene);
+    }
     public static void main(String[] args) {
         launch(args);
     }
