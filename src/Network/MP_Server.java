@@ -5,9 +5,9 @@ import java.net.*;
 import java.util.*;
 
 public class MP_Server extends Thread {
-    private int port;
+    private final int port;
     private ServerSocket serverSocket;
-    private List<ClientHandler> clients = new ArrayList<>();
+    private final List<ClientHandler> clients = new ArrayList<>();
     private boolean isRunning = false;
 
     public MP_Server(int port) {
@@ -24,7 +24,9 @@ public class MP_Server extends Thread {
             while (isRunning) {
                 Socket socket = serverSocket.accept();
                 ClientHandler handler = new ClientHandler(socket, this);
-                clients.add(handler);
+                synchronized (clients) {
+                    clients.add(handler);
+                }
                 new Thread(handler).start();
             }
         } catch (IOException e) {
@@ -33,22 +35,26 @@ public class MP_Server extends Thread {
     }
 
     public void broadcast(String message) {
-        for (ClientHandler client : clients) {
-            client.sendMessage(message);
+        synchronized (clients) {
+            for (ClientHandler client : clients) {
+                client.sendMessage(message);
+            }
         }
     }
 
     public void stopServer() {
         isRunning = false;
-        try { if (serverSocket != null) serverSocket.close(); } catch (IOException e) {}
+        try {
+            if (serverSocket != null) serverSocket.close();
+        } catch (IOException ignored) {}
     }
 
     // Inner class to handle individual client connections
     private class ClientHandler implements Runnable {
-        private Socket socket;
+        private final Socket socket;
         private PrintWriter out;
         private BufferedReader in;
-        private MP_Server server;
+        private final MP_Server server;
 
         public ClientHandler(Socket socket, MP_Server server) {
             this.socket = socket;
@@ -63,18 +69,25 @@ public class MP_Server extends Thread {
 
                 String input;
                 while ((input = in.readLine()) != null) {
-                    // When a client sends a message (like Chat), broadcast it to everyone
+                    // When a client sends a message, broadcast it to everyone
                     server.broadcast(input);
                 }
             } catch (IOException e) {
                 System.out.println("Client disconnected.");
             } finally {
-                clients.remove(this);
+                synchronized (clients) {
+                    clients.remove(this);
+                }
+                try {
+                    if (socket != null) socket.close();
+                } catch (IOException ignored) {}
             }
         }
 
         public void sendMessage(String msg) {
-            out.println(msg);
+            if (out != null) {
+                out.println(msg);
+            }
         }
     }
 }

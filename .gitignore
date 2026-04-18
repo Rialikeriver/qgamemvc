@@ -1,0 +1,16 @@
+# Eclipse metadata
+.project
+.classpath
+.settings/
+
+# Build output
+bin/
+target/
+out/
+
+# OS-specific junk
+.DS_Store
+Thumbs.db
+
+# JavaFX SDK paths (never commit local SDKs)
+javafx-sdk*/

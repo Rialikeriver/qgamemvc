@@ -11,13 +11,13 @@ import javafx.scene.layout.*;
  */
 public class MP_ConnectionView extends VBox {
 
-    private TextField ipField;
-    private TextField portField;
-    private Button hostBtn;
-    private Button joinBtn;
-    private Button backBtn;
-    private TextArea statusArea;
-    
+    private final TextField ipField;
+    private final TextField portField;
+    private final Button hostBtn;
+    private final Button joinBtn;
+    private final Button backBtn;
+    private final TextArea statusArea;
+
     public MP_ConnectionView() {
         this.setSpacing(20);
         this.setPadding(new Insets(40));
@@ -36,7 +36,7 @@ public class MP_ConnectionView extends VBox {
         Label ipLabel = new Label("Server IP:");
         ipLabel.setStyle("-fx-text-fill: white;");
         ipField = new TextField("127.0.0.1"); // Default to localhost
-        
+
         Label portLabel = new Label("Port:");
         portLabel.setStyle("-fx-text-fill: white;");
         portField = new TextField("5555");
@@ -51,16 +51,15 @@ public class MP_ConnectionView extends VBox {
         joinBtn = new Button("JOIN GAME");
         backBtn = new Button("BACK TO MAIN MENU");
 
-        // Apply your existing CSS style
         hostBtn.getStyleClass().add("answer-btn");
         joinBtn.getStyleClass().add("answer-btn");
         backBtn.getStyleClass().add("answer-btn");
-        
+
         hostBtn.setPrefWidth(200);
         joinBtn.setPrefWidth(200);
         backBtn.setPrefWidth(200);
 
-        // Status log (to see connection progress)
+        // Status log
         statusArea = new TextArea("Ready...");
         statusArea.setEditable(false);
         statusArea.setPrefHeight(100);
@@ -70,13 +69,13 @@ public class MP_ConnectionView extends VBox {
         this.getChildren().addAll(title, grid, hostBtn, joinBtn, backBtn, statusArea);
     }
 
-    // Getters for the Controller
     public String getIp() { return ipField.getText(); }
-    public int getPort() { 
+
+    public int getPort() {
         try {
             return Integer.parseInt(portField.getText());
         } catch (NumberFormatException e) {
-            return 5555; 
+            return 5555;
         }
     }
 

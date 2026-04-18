@@ -85,7 +85,13 @@ public class QMillionaireMVC extends Application {
         userBtn.setOnAction(e -> showPlayerMenu(primaryStage));
         
         // Wire the new button to the Network Setup
-        multiBtn.setOnAction(e -> showNetworkSetup(primaryStage));
+        multiBtn.setOnAction(e -> {
+            if (!session.hasUser()) {
+                showLoadProfileScreen(primaryStage, true);  // ← return to multiplayer
+            } else {
+                showNetworkSetup(primaryStage);
+            }
+        });
 
         primaryStage.setScene(modeScene);
     }
@@ -149,22 +155,40 @@ public class QMillionaireMVC extends Application {
         primaryStage.setScene(gameScene);
     }
 
+
     /**
-     * Shows the player menu with options to start a new profile, load a profile,
-     * quit, or return to mode selection.
+     * Shows the player menu. If returnToMultiplayer is true, loading a profile
+     * will return to the multiplayer setup instead of starting a single-player game.
      */
-    private void showPlayerMenu(Stage primaryStage) {
+    private void showPlayerMenu(Stage primaryStage, boolean returnToMultiplayer) {
         PlayerMenuView view = new PlayerMenuView();
 
+        // New profile always starts a new single-player game
         view.getNewGameBtn().setOnAction(e -> showNewProfileScreen(primaryStage));
-        view.getLoadGameBtn().setOnAction(e -> showLoadProfileScreen(primaryStage));
+
+        // Load profile returns to either multiplayer or single-player
+        view.getLoadGameBtn().setOnAction(e -> 
+            showLoadProfileScreen(primaryStage, returnToMultiplayer)
+        );
+
         view.getQuitBtn().setOnAction(e -> primaryStage.close());
+
+        // Back always returns to mode selection
         view.getBackBtn().setOnAction(e -> showModeSelection(primaryStage));
 
         Scene scene = new Scene(view, 1280, 720);
         addCSS(scene);
         primaryStage.setScene(scene);
     }
+
+    /**
+     * Shows the player menu with options to start a new profile, load a profile,
+     * quit, or return to mode selection.
+     */
+    private void showPlayerMenu(Stage primaryStage) {
+        showPlayerMenu(primaryStage, false);   // default: NOT returning to multiplayer
+    }
+
 
     /**
      * Shows the admin user list and wires admin‑specific callbacks.
@@ -227,23 +251,35 @@ public class QMillionaireMVC extends Application {
     /**
      * Shows the profile selection screen for players.
      */
-    private void showLoadProfileScreen(Stage primaryStage) {
+    private void showLoadProfileScreen(Stage primaryStage, boolean returnToMultiplayer) {
         ProfileSelectionView view = new ProfileSelectionView();
 
         profileController.wireProfileSelectionScreen(
-                view,
-                user -> {
-                    session.setCurrentUser(user);
+            view,
+            user -> {
+                session.setCurrentUser(user);
+
+                if (returnToMultiplayer) {
+                    showNetworkSetup(primaryStage);
+                } else {
                     showGameScreen(primaryStage);
-                },
-                () -> showPlayerMenu(primaryStage),
-                () -> showNewProfileScreen(primaryStage)
+                }
+            },
+            () -> {
+                if (returnToMultiplayer) {
+                    showModeSelection(primaryStage);
+                } else {
+                    showPlayerMenu(primaryStage);
+                }
+            },
+            () -> showNewProfileScreen(primaryStage)
         );
 
         Scene scene = new Scene(view, 1280, 720);
         addCSS(scene);
         primaryStage.setScene(scene);
     }
+
 
     /**
      * Shows the admin user editor for modifying an existing profile.
@@ -351,17 +387,30 @@ public class QMillionaireMVC extends Application {
      * NEW METHOD: Shows the Network Connection screen
      */
     private void showNetworkSetup(Stage primaryStage) {
-        Network.MP_ConnectionView view = new Network.MP_ConnectionView();
-        new Network.MP_ConnectionController(view); // Controller handles logic
 
-        // Add a back button action to return to mode selection
+        // Create the view
+        Network.MP_ConnectionView view = new Network.MP_ConnectionView();
+
+        // Get the real profile name from the active session
+        String playerName = session.getCurrentUser().getUsername();
+
+        // Create the controller (patched version requires Stage)
+        new Network.MP_ConnectionController(view, playerName, primaryStage);
+
+        // Back button returns to mode selection
         view.getBackBtn().setOnAction(e -> showModeSelection(primaryStage));
 
+        // Show the screen
         Scene scene = new Scene(view, 1280, 720);
         addCSS(scene);
         primaryStage.setTitle("Quantum Millionaire - Network Setup");
         primaryStage.setScene(scene);
     }
+
+
+
+    
+    
     public static void main(String[] args) {
         launch(args);
     }

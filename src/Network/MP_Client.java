@@ -34,6 +34,8 @@ public class MP_Client {
     }
 
     public void disconnect() {
-        try { if (socket != null) socket.close(); } catch (IOException e) {}
+        try {
+            if (socket != null) socket.close();
+        } catch (IOException ignored) {}
     }
 }
