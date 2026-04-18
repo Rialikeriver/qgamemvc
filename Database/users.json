@@ -13,8 +13,8 @@
   "entanglementUsed" : false,
   "interferenceUsed" : false,
   "totalLifelinesUsed" : 5,
-  "mpGamesPlayed" : 1,
-  "mpGamesWon" : 1,
+  "mpGamesPlayed" : 2,
+  "mpGamesWon" : 2,
   "mpGamesLost" : 0,
   "mpMoneyEarned" : 300
 }, {
@@ -32,10 +32,10 @@
   "entanglementUsed" : false,
   "interferenceUsed" : false,
   "totalLifelinesUsed" : 1,
-  "mpGamesPlayed" : 0,
-  "mpGamesWon" : 0,
-  "mpGamesLost" : 0,
-  "mpMoneyEarned" : 0
+  "mpGamesPlayed" : 3,
+  "mpGamesWon" : 2,
+  "mpGamesLost" : 1,
+  "mpMoneyEarned" : 33100
 }, {
   "username" : "Yogi",
   "passwordHash" : null,
@@ -51,10 +51,10 @@
   "entanglementUsed" : false,
   "interferenceUsed" : false,
   "totalLifelinesUsed" : 0,
-  "mpGamesPlayed" : 0,
-  "mpGamesWon" : 0,
+  "mpGamesPlayed" : 1,
+  "mpGamesWon" : 1,
   "mpGamesLost" : 0,
-  "mpMoneyEarned" : 0
+  "mpMoneyEarned" : 181800
 }, {
   "username" : "hobor",
   "passwordHash" : null,
@@ -70,8 +70,8 @@
   "entanglementUsed" : false,
   "interferenceUsed" : false,
   "totalLifelinesUsed" : 0,
-  "mpGamesPlayed" : 1,
-  "mpGamesWon" : 0,
-  "mpGamesLost" : 1,
-  "mpMoneyEarned" : 0
+  "mpGamesPlayed" : 4,
+  "mpGamesWon" : 2,
+  "mpGamesLost" : 2,
+  "mpMoneyEarned" : 1300
 } ]
