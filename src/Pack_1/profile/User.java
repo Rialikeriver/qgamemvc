@@ -4,9 +4,9 @@ import java.time.LocalDateTime;
 
 /**
  * Represents a persistent user profile containing identity, progression,
- * money statistics, win/loss records, and lifeline usage. This model is
- * mutable and designed for JSON serialization through {@link UserStore}
- * implementations.
+ * money statistics, win/loss records, lifeline usage, and multiplayer stats.
+ * This model is mutable and designed for JSON serialization through
+ * {@link UserStore} implementations.
  *
  * <p>Fields are grouped by purpose for clarity. Getters and setters are
  * intentionally undocumented unless behavior differs from simple access.</p>
@@ -22,11 +22,11 @@ public class User {
     private int highestTierReached;
     private LocalDateTime lastPlayed;
 
-    // Money statistics
+    // Money statistics (single-player)
     private int totalMoneyEarned;
     private int lastGameMoney;
 
-    // Win/loss record
+    // Win/loss record (single-player)
     private int gamesWon;
     private int gamesLost;
 
@@ -36,6 +36,12 @@ public class User {
     private boolean entanglementUsed;
     private boolean interferenceUsed;
     private int totalLifelinesUsed;
+
+    // Multiplayer statistics
+    private int mpGamesPlayed;
+    private int mpGamesWon;
+    private int mpGamesLost;
+    private int mpMoneyEarned;
 
     /** Default constructor for deserialization. */
     public User() {}
@@ -68,6 +74,12 @@ public class User {
     public boolean isInterferenceUsed() { return interferenceUsed; }
     public int getTotalLifelinesUsed() { return totalLifelinesUsed; }
 
+    // Multiplayer getters
+    public int getMpGamesPlayed() { return mpGamesPlayed; }
+    public int getMpGamesWon() { return mpGamesWon; }
+    public int getMpGamesLost() { return mpGamesLost; }
+    public int getMpMoneyEarned() { return mpMoneyEarned; }
+
     // Setters
     public void setUsername(String username) { this.username = username; }
     public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
@@ -83,4 +95,16 @@ public class User {
     public void setEntanglementUsed(boolean used) { this.entanglementUsed = used; }
     public void setInterferenceUsed(boolean used) { this.interferenceUsed = used; }
     public void setTotalLifelinesUsed(int totalLifelinesUsed) { this.totalLifelinesUsed = totalLifelinesUsed; }
+
+    // Multiplayer setters
+    public void setMpGamesPlayed(int mpGamesPlayed) { this.mpGamesPlayed = mpGamesPlayed; }
+    public void setMpGamesWon(int mpGamesWon) { this.mpGamesWon = mpGamesWon; }
+    public void setMpGamesLost(int mpGamesLost) { this.mpGamesLost = mpGamesLost; }
+    public void setMpMoneyEarned(int mpMoneyEarned) { this.mpMoneyEarned = mpMoneyEarned; }
+
+    // Multiplayer helpers
+    public void addMpGamePlayed() { this.mpGamesPlayed++; }
+    public void addMpGameWon() { this.mpGamesWon++; }
+    public void addMpGameLost() { this.mpGamesLost++; }
+    public void addMpMoneyEarned(int amount) { this.mpMoneyEarned += amount; }
 }

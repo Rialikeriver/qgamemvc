@@ -159,11 +159,8 @@ public class UserManager {
     }
 
     /**
-     * Records the final result of a completed game, updating lifetime
+     * Records the final result of a completed single‑player game, updating lifetime
      * statistics, money, tier history, lifeline usage, and win/loss counts.
-     *
-     * <p>Existing inline comments are preserved because they clarify which
-     * fields are updated only at end‑of‑game versus mid‑game.</p>
      */
     public void recordGameResult(User user, QModel model) {
         if (user == null || model == null) return;
@@ -210,9 +207,6 @@ public class UserManager {
     /**
      * Resets mid‑game fields after a game ends without updating lifetime
      * statistics. Used when the game is aborted or exited early.
-     *
-     * <p>Inline comments preserved because they clarify intentional reset
-     * behavior.</p>
      */
     public void finalizeGame(User user, QModel model) {
         if (user == null || model == null) return;
@@ -227,6 +221,30 @@ public class UserManager {
         user.setLifelinesUsed(0);
 
         user.setLastPlayed(LocalDateTime.now());
+        saveUsers();
+    }
+
+    /**
+     * Records the result of a completed multiplayer game for a single user.
+     *
+     * <p>Assumes that any money earned in multiplayer is kept and added to
+     * the multiplayer money total.</p>
+     *
+     * @param user         the user whose stats to update
+     * @param won          whether this user won the multiplayer game
+     * @param moneyEarned  the amount of money earned in this multiplayer game
+     */
+    public void recordMultiplayerResult(User user, boolean won, int moneyEarned) {
+        if (user == null) return;
+
+        user.addMpGamePlayed();
+        if (won) {
+            user.addMpGameWon();
+        } else {
+            user.addMpGameLost();
+        }
+        user.addMpMoneyEarned(moneyEarned);
+
         saveUsers();
     }
 }

@@ -13,37 +13,10 @@ import javafx.scene.layout.VBox;
  *
  * <p>This cell displays a compact profile card containing the user's avatar,
  * username, last played date, tier, current game progress, lifeline usage,
- * total money earned, and win/loss record. The layout is structured into
- * multiple columns to keep related statistics grouped and visually balanced.</p>
- *
- * <p>The cell is fully styled using JavaFX nodes and CSS classes, allowing the
- * surrounding UI to apply theme-specific styling (e.g., the {@code profile-card}
- * style class). All content is rebuilt on each update to ensure accurate
- * reflection of the user's current state.</p>
+ * total money earned, win/loss record, and multiplayer statistics.</p>
  */
 public class ProfileCell extends ListCell<User> {
 
-    /**
-     * Updates the visual representation of the cell based on the given user.
-     *
-     * <p>If the cell is empty or the user is {@code null}, the graphic is cleared.
-     * Otherwise, a structured profile card is constructed containing:</p>
-     *
-     * <ul>
-     *   <li>An avatar icon</li>
-     *   <li>The username in highlighted styling</li>
-     *   <li>Last played date and current tier</li>
-     *   <li>Current game money and lifelines used</li>
-     *   <li>Total money earned and win/loss statistics</li>
-     * </ul>
-     *
-     * <p>The layout uses a combination of {@link HBox} and {@link VBox} containers
-     * to create a three-column statistics row beneath the username. All labels are
-     * styled for readability against the game's UI theme.</p>
-     *
-     * @param user  the user associated with this cell
-     * @param empty whether the cell should be rendered as empty
-     */
     @Override
     protected void updateItem(User user, boolean empty) {
         super.updateItem(user, empty);
@@ -87,17 +60,33 @@ public class ProfileCell extends ListCell<User> {
 
         VBox colB = new VBox(2, currentMoneyLbl, lifelinesLbl);
 
-        // Total money + wins/losses
+        // Total money (single-player)
         Label totalMoneyLbl = new Label("Total Money: $" + user.getTotalMoneyEarned());
         totalMoneyLbl.setStyle("-fx-text-fill: white;");
 
+        // Wins/losses (single-player)
         Label winsLossLbl = new Label("Won: " + user.getGamesWon() + "  Lost: " + user.getGamesLost());
         winsLossLbl.setStyle("-fx-text-fill: white;");
 
-        VBox colC = new VBox(2, totalMoneyLbl, winsLossLbl);
+        // Multiplayer stats — placed directly under wins/losses
+        Label mpMoneyLbl = new Label("MP Money: $" + user.getMpMoneyEarned());
+        mpMoneyLbl.setStyle("-fx-text-fill: white;");
 
-        // Three-column layout
-        HBox statsRow = new HBox(40, colA, colB, colC);
+        Label mpWinsLossLbl = new Label("MP Won: " + user.getMpGamesWon() + "  Lost: " + user.getMpGamesLost());
+        mpWinsLossLbl.setStyle("-fx-text-fill: white;");
+
+        VBox colC = new VBox(2,
+                totalMoneyLbl,
+                winsLossLbl
+        );
+        
+        VBox colD = new VBox(2,
+                mpMoneyLbl,
+                mpWinsLossLbl
+        );
+
+        // TFour-column layout
+        HBox statsRow = new HBox(40, colA, colB, colC, colD);
         statsRow.setAlignment(Pos.CENTER_LEFT);
 
         // Stack name + stats

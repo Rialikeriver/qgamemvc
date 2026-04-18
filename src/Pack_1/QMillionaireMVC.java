@@ -95,6 +95,7 @@ public class QMillionaireMVC extends Application {
 
         primaryStage.setScene(modeScene);
     }
+
     /**
      * Shows the admin panel with options to manage questions or users.
      */
@@ -164,7 +165,7 @@ public class QMillionaireMVC extends Application {
         PlayerMenuView view = new PlayerMenuView();
 
         // New profile always starts a new single-player game
-        view.getNewGameBtn().setOnAction(e -> showNewProfileScreen(primaryStage));
+        view.getNewGameBtn().setOnAction(e -> showNewProfileScreen(primaryStage, false));
 
         // Load profile returns to either multiplayer or single-player
         view.getLoadGameBtn().setOnAction(e -> 
@@ -232,15 +233,34 @@ public class QMillionaireMVC extends Application {
      * Shows the new profile creation screen for players.
      */
     private void showNewProfileScreen(Stage primaryStage) {
+        showNewProfileScreen(primaryStage, false);
+    }
+
+    /**
+     * Shows the new profile creation screen for players.
+     * If returnToMultiplayer is true, creating a profile will return
+     * to the multiplayer setup instead of starting a single-player game.
+     */
+    private void showNewProfileScreen(Stage primaryStage, boolean returnToMultiplayer) {
         NewProfileView view = new NewProfileView();
 
         profileController.wireNewProfileScreen(
                 view,
                 user -> {
                     session.setCurrentUser(user);
-                    showGameScreen(primaryStage);
+                    if (returnToMultiplayer) {
+                        showNetworkSetup(primaryStage);
+                    } else {
+                        showGameScreen(primaryStage);
+                    }
                 },
-                () -> showPlayerMenu(primaryStage)
+                () -> {
+                    if (returnToMultiplayer) {
+                        showLoadProfileScreen(primaryStage, true);
+                    } else {
+                        showPlayerMenu(primaryStage);
+                    }
+                }
         );
 
         Scene scene = new Scene(view, 1280, 720);
@@ -272,7 +292,7 @@ public class QMillionaireMVC extends Application {
                     showPlayerMenu(primaryStage);
                 }
             },
-            () -> showNewProfileScreen(primaryStage)
+            () -> showNewProfileScreen(primaryStage, returnToMultiplayer)
         );
 
         Scene scene = new Scene(view, 1280, 720);
