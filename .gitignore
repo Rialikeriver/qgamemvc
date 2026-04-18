@@ -15,3 +15,10 @@ Thumbs.db
 # JavaFX SDK paths (never commit local SDKs)
 javafx-sdk*/
 /assets/
+/qgamemvc.jar
+/.temp-New_config-args-1773885566209.txt
+/.temp-New_config-args-1774032570454.txt
+/.temp-QMillionai-args-1773544857733.txt
+/.temp-QMillionai-args-1773545348707.txt
+/.temp-QMillionai-args-1773586350020.txt
+/.temp-QMillionai-args-1773586556603.txt
