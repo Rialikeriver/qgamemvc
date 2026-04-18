@@ -1,5 +1,7 @@
 package Network;
 
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.geometry.Side;
 import javafx.scene.control.Button;
@@ -9,8 +11,6 @@ import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.layout.VBox;
-import javafx.animation.KeyFrame;
-import javafx.animation.Timeline;
 import javafx.util.Duration;
 
 import java.util.*;
@@ -30,7 +30,6 @@ public class MP_ClientGameController {
 
     private boolean hasAnsweredCurrentQuestion = false;
 
-    // Callback to return to Network Setup after match ends
     private final Runnable returnToNetworkSetup;
 
     public MP_ClientGameController(MP_QView mpView,
@@ -161,7 +160,6 @@ public class MP_ClientGameController {
         String[] parts = payload.split("\\|");
         if (parts.length < 3) return;
 
-        // Host sends: questionIndex|tier|questionText|...
         String indexStr = parts[0];
         String questionText = parts[2];
 
@@ -203,29 +201,27 @@ public class MP_ClientGameController {
     private void handleWin(String payload) {
         mpView.appendChat("*** Game over: " + payload + " ***");
 
-        // Simple end-of-game overlay showing winners
+        mpView.getBtnA().setDisable(true);
+        mpView.getBtnB().setDisable(true);
+        mpView.getBtnC().setDisable(true);
+        mpView.getBtnD().setDisable(true);
+
+        mpView.getSuperpositionBtn().setDisable(true);
+        mpView.getEntanglementBtn().setDisable(true);
+        mpView.getInterferenceBtn().setDisable(true);
+
         MP_ScoreboardOverlayView overlay = new MP_ScoreboardOverlayView(false);
         VBox list = overlay.getPlayerListBox();
 
-        String winnersText = (payload == null || payload.isBlank())
-                ? "No winners"
-                : "Winner(s): " + payload;
-
-        Label lbl = new Label(winnersText);
-        lbl.setStyle(
-            "-fx-text-fill: #d4af37;" +
-            "-fx-font-size: 22px;"
-        );
+        Label lbl = new Label("Winner(s): " + (payload.isEmpty() ? "None" : payload));
+        lbl.setStyle("-fx-text-fill: #d4af37; -fx-font-size: 22px; -fx-font-weight: bold;");
         list.getChildren().add(lbl);
 
-        overlay.getCountdownLabel().setText("Match complete");
-
+        overlay.getCountdownLabel().setText("Returning to Network Setup...");
         overlay.getContinueBtn().setDisable(true);
 
         mpView.getChildren().add(overlay);
-        currentOverlay = overlay;
 
-        // Return to Network Setup after ~20 seconds
         Timeline exitTimer = new Timeline(new KeyFrame(Duration.seconds(20), e -> {
             if (returnToNetworkSetup != null) {
                 returnToNetworkSetup.run();
@@ -320,7 +316,7 @@ public class MP_ClientGameController {
             totals.put(name, money);
 
             Label lbl = new Label(name + " — " + correct.toUpperCase() + " — $" + money);
-            
+
             String hex = mpView.getPlayerColor(name);
 
             lbl.setStyle(
@@ -328,11 +324,9 @@ public class MP_ClientGameController {
                 "-fx-font-size: 18px;"
             );
 
-
             list.getChildren().add(lbl);
         }
 
-        // Update top name cards and ladder pips
         mpView.updatePlayerNameCards(mpView.getPlayerList().getItems(), totals);
         mpView.updateLadderMarkers(tierHits);
 

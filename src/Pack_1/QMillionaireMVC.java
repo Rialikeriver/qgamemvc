@@ -29,14 +29,6 @@ public class QMillionaireMVC extends Application {
     private Pack_1.profile.Session session;
     private ProfileController profileController;
 
-    /**
-     * Initializes persistent stores, session state, and shows the splash screen.
-     * After the splash completes, the user is taken to the mode selection screen.
-     */
-    /**
-     * Initializes persistent stores, session state, and shows the splash screen.
-     * After the splash completes, the user is taken to the mode selection screen.
-     */
     @Override
     public void start(Stage primaryStage) {
         userManager = new Pack_1.profile.UserManager(
@@ -46,35 +38,34 @@ public class QMillionaireMVC extends Application {
         session = new Pack_1.profile.Session();
         profileController = new ProfileController(userManager);
 
-        // When the splash screen ends, we call showModeSelection
+        // ⭐ If multiplayer clears the scene, rebuild the main menu
+        primaryStage.sceneProperty().addListener((obs, oldScene, newScene) -> {
+            if (newScene == null) {
+                showModeSelection(primaryStage);
+            }
+        });
+
         QSplash splash = new QSplash(() -> {
-            showModeSelection(primaryStage); 
+            showModeSelection(primaryStage);
             primaryStage.show();
         });
 
         splash.show();
     }
-    
 
-    /**
-     * Rebuilds and displays the mode selection screen. Used when returning
-     * from admin or player menus.
-     */
     private void showModeSelection(Stage primaryStage) {
-        VBox modeBox = new VBox(30); // Tightened spacing for 3 buttons
+        VBox modeBox = new VBox(30);
         modeBox.setAlignment(Pos.CENTER);
         modeBox.setStyle("-fx-background-color: linear-gradient(to bottom, #1a0b2e, #000022);");
 
         Label title = new Label("SELECT GAME MODE");
         title.setStyle("-fx-font-size: 36px; -fx-font-weight: bold; -fx-text-fill: #d4af37;");
 
-        // --- EXISTING BUTTONS ---
         Button adminBtn = createModeButton("ADMIN MODE\nManage Questions");
         Button userBtn = createModeButton("PLAYER MODE\nPlay Quantum Millionaire");
 
-        // --- NEW MULTIPLAYER BUTTON ---
         Button multiBtn = createModeButton("MULTIPLAYER MODE\nConnect & Chat");
-        multiBtn.setStyle("-fx-font-size: 20px; -fx-border-color: #00ff00;"); // Green border to distinguish it
+        multiBtn.setStyle("-fx-font-size: 20px; -fx-border-color: #00ff00;");
 
         modeBox.getChildren().addAll(title, adminBtn, userBtn, multiBtn);
 
@@ -83,11 +74,10 @@ public class QMillionaireMVC extends Application {
 
         adminBtn.setOnAction(e -> showAdminScreen(primaryStage));
         userBtn.setOnAction(e -> showPlayerMenu(primaryStage));
-        
-        // Wire the new button to the Network Setup
+
         multiBtn.setOnAction(e -> {
             if (!session.hasUser()) {
-                showLoadProfileScreen(primaryStage, true);  // ← return to multiplayer
+                showLoadProfileScreen(primaryStage, true);
             } else {
                 showNetworkSetup(primaryStage);
             }
@@ -96,9 +86,6 @@ public class QMillionaireMVC extends Application {
         primaryStage.setScene(modeScene);
     }
 
-    /**
-     * Shows the admin panel with options to manage questions or users.
-     */
     private void showAdminScreen(Stage primaryStage) {
         AdminMenuView view = new AdminMenuView();
 
@@ -112,9 +99,6 @@ public class QMillionaireMVC extends Application {
         primaryStage.setScene(scene);
     }
 
-    /**
-     * Opens the question manager (admin mode).
-     */
     private void showQuestionManager(Stage primaryStage) {
         QModeSelectionModel adminModel = new QModeSelectionModel();
         QModeSelectionView adminView = new QModeSelectionView();
@@ -126,10 +110,6 @@ public class QMillionaireMVC extends Application {
         primaryStage.setScene(adminScene);
     }
 
-    /**
-     * Starts or resumes a game session. If a user is logged in, their progress
-     * (tier and lifelines) is restored before gameplay begins.
-     */
     private void showGameScreen(Stage primaryStage) {
         List<Question> questions = QuestionLoader.loadQuestions();
         QModel gameModel = new QModel(questions);
@@ -156,25 +136,17 @@ public class QMillionaireMVC extends Application {
         primaryStage.setScene(gameScene);
     }
 
-
-    /**
-     * Shows the player menu. If returnToMultiplayer is true, loading a profile
-     * will return to the multiplayer setup instead of starting a single-player game.
-     */
     private void showPlayerMenu(Stage primaryStage, boolean returnToMultiplayer) {
         PlayerMenuView view = new PlayerMenuView();
 
-        // New profile always starts a new single-player game
         view.getNewGameBtn().setOnAction(e -> showNewProfileScreen(primaryStage, false));
 
-        // Load profile returns to either multiplayer or single-player
-        view.getLoadGameBtn().setOnAction(e -> 
+        view.getLoadGameBtn().setOnAction(e ->
             showLoadProfileScreen(primaryStage, returnToMultiplayer)
         );
 
         view.getQuitBtn().setOnAction(e -> primaryStage.close());
 
-        // Back always returns to mode selection
         view.getBackBtn().setOnAction(e -> showModeSelection(primaryStage));
 
         Scene scene = new Scene(view, 1280, 720);
@@ -182,18 +154,10 @@ public class QMillionaireMVC extends Application {
         primaryStage.setScene(scene);
     }
 
-    /**
-     * Shows the player menu with options to start a new profile, load a profile,
-     * quit, or return to mode selection.
-     */
     private void showPlayerMenu(Stage primaryStage) {
-        showPlayerMenu(primaryStage, false);   // default: NOT returning to multiplayer
+        showPlayerMenu(primaryStage, false);
     }
 
-
-    /**
-     * Shows the admin user list and wires admin‑specific callbacks.
-     */
     private void showAdminUserList(Stage primaryStage) {
         ProfileSelectionView view = new ProfileSelectionView();
         AdminUserController controller = new AdminUserController(userManager);
@@ -211,9 +175,6 @@ public class QMillionaireMVC extends Application {
         primaryStage.setScene(scene);
     }
 
-    /**
-     * Shows the admin "create new user" screen.
-     */
     private void showAdminNewUser(Stage primaryStage) {
         NewProfileView view = new NewProfileView();
 
@@ -229,18 +190,10 @@ public class QMillionaireMVC extends Application {
         primaryStage.setScene(scene);
     }
 
-    /**
-     * Shows the new profile creation screen for players.
-     */
     private void showNewProfileScreen(Stage primaryStage) {
         showNewProfileScreen(primaryStage, false);
     }
 
-    /**
-     * Shows the new profile creation screen for players.
-     * If returnToMultiplayer is true, creating a profile will return
-     * to the multiplayer setup instead of starting a single-player game.
-     */
     private void showNewProfileScreen(Stage primaryStage, boolean returnToMultiplayer) {
         NewProfileView view = new NewProfileView();
 
@@ -268,9 +221,6 @@ public class QMillionaireMVC extends Application {
         primaryStage.setScene(scene);
     }
 
-    /**
-     * Shows the profile selection screen for players.
-     */
     private void showLoadProfileScreen(Stage primaryStage, boolean returnToMultiplayer) {
         ProfileSelectionView view = new ProfileSelectionView();
 
@@ -300,10 +250,6 @@ public class QMillionaireMVC extends Application {
         primaryStage.setScene(scene);
     }
 
-
-    /**
-     * Shows the admin user editor for modifying an existing profile.
-     */
     private void showAdminUserEditor(Stage primaryStage, Pack_1.profile.User user) {
         AdminUserEditorView view = new AdminUserEditorView(user);
 
@@ -370,16 +316,10 @@ public class QMillionaireMVC extends Application {
         primaryStage.setScene(scene);
     }
 
-    /**
-     * Saves all user data through the user manager.
-     */
     private void userManagerSaveAll() {
         userManager.saveAllUsers();
     }
 
-    /**
-     * Applies the shared CSS theme to a scene.
-     */
     private void addCSS(Scene scene) {
         try {
             String cssPath = getClass().getResource("/Pack_1/style.css").toExternalForm();
@@ -389,11 +329,6 @@ public class QMillionaireMVC extends Application {
         }
     }
 
-  
-
-    /**
-     * Helper to keep button styling consistent
-     */
     private Button createModeButton(String text) {
         Button b = new Button(text);
         b.getStyleClass().addAll("answer-btn");
@@ -404,37 +339,25 @@ public class QMillionaireMVC extends Application {
     }
 
     /**
-     * NEW METHOD: Shows the Network Connection screen
+     * Shows the Network Connection screen
      */
     private void showNetworkSetup(Stage primaryStage) {
 
-        // Create the view
         Network.MP_ConnectionView view = new Network.MP_ConnectionView();
 
-        // Get the real profile name from the active session
         String playerName = session.getCurrentUser().getUsername();
 
-        // ⭐ FIXED: Pass UserManager + Session to the new constructor
-        new Network.MP_ConnectionController(
-                view,
-                playerName,
-                primaryStage,
-                userManager,
-                session
-        );
+        // ⭐ UPDATED: pass userManager and session
+        new Network.MP_ConnectionController(view, playerName, primaryStage, userManager, session);
 
-        // Back button returns to mode selection
         view.getBackBtn().setOnAction(e -> showModeSelection(primaryStage));
 
-        // Show the screen
         Scene scene = new Scene(view, 1280, 720);
         addCSS(scene);
         primaryStage.setTitle("Quantum Millionaire - Network Setup");
         primaryStage.setScene(scene);
     }
 
-
-    
     public static void main(String[] args) {
         launch(args);
     }

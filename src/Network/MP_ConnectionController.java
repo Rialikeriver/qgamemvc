@@ -39,17 +39,10 @@ public class MP_ConnectionController {
 
     private boolean recenteringInstalled = false;
 
-    /** Cache PLAYER_LIST if it arrives before gameView exists */
     private String pendingPlayerList = null;
 
-    /**
-     * Canonical set of all known players (host + all clients).
-     * This is updated on every JOIN/LEAVE and used to seed both
-     * the waiting room and the in‑game player list.
-     */
     private final Set<String> knownPlayers = new LinkedHashSet<>();
 
-    // Profile / session wiring for multiplayer stats
     private final UserManager userManager;
     private final Session session;
 
@@ -69,20 +62,14 @@ public class MP_ConnectionController {
         this.userManager = userManager;
         this.session = session;
 
-        // Local player is always known
         knownPlayers.add(this.localPlayerName);
 
         wireActions();
         installWindowRecentering();
     }
 
-    // -------------------------------------------------------------------------
-    // UI WIRING (HOST / JOIN / BACK)
-    // -------------------------------------------------------------------------
-
     private void wireActions() {
 
-        // HOST BUTTON
         view.getHostBtn().setOnAction(e -> {
             int port = view.getPort();
             server = new MP_Server(port);
@@ -90,11 +77,9 @@ public class MP_ConnectionController {
             view.log("Server started on port " + port + ". Waiting for players...");
             isHost = true;
 
-            // Host also connects as a client to its own server
             connectAsClient("127.0.0.1", port);
         });
 
-        // JOIN BUTTON
         view.getJoinBtn().setOnAction(e -> {
             String ip = view.getIp();
             int port = view.getPort();
@@ -102,34 +87,23 @@ public class MP_ConnectionController {
             connectAsClient(ip, port);
         });
 
-        // BACK BUTTON
         view.getBackBtn().setOnAction(e -> {
             view.log("Back to main menu requested.");
         });
     }
 
-    /**
-     * Connects as a client and then transitions to the waiting room.
-     * We create the waiting room BEFORE sending JOIN so the JOIN
-     * message is never "lost" before the controller exists.
-     */
     private void connectAsClient(String ip, int port) {
         client = new MP_Client();
         try {
             client.connect(ip, port, this::handleIncomingMessage);
             view.log("Connected to " + ip + ":" + port);
 
-            // Move to waiting room (controller will send JOIN once ready)
             switchToWaitingRoom();
 
         } catch (Exception ex) {
             view.log("Connection failed: " + ex.getMessage());
         }
     }
-
-    // -------------------------------------------------------------------------
-    // WAITING ROOM
-    // -------------------------------------------------------------------------
 
     private void switchToWaitingRoom() {
         Platform.runLater(() -> {
@@ -142,19 +116,15 @@ public class MP_ConnectionController {
                             client,
                             isHost,
                             localPlayerName,
-                            this::switchToGameView   // callback when START received
+                            this::switchToGameView
                     );
 
-            // Ensure the local player is visible immediately in the waiting room
             waitingRoomController.addLocalPlayerImmediately();
 
-            // Seed any already-known players (e.g., if we joined late)
             for (String name : knownPlayers) {
                 waitingRoomController.ensurePlayerListed(name);
             }
 
-            // Now that the controller exists, announce JOIN so everyone
-            // (including ourselves) sees this player.
             client.send(MP_Protocol.format(MP_Protocol.JOIN, localPlayerName, ""));
 
             Scene scene = new Scene(wrView, 1280, 720);
@@ -172,21 +142,39 @@ public class MP_ConnectionController {
     // RETURN TO NETWORK SETUP
     // -------------------------------------------------------------------------
 
-    /**
-     * Returns to the original Network Setup screen (MP_ConnectionView).
-     * Used after multiplayer match ends.
-     */
     private void returnToNetworkSetup() {
         Platform.runLater(() -> {
-            Scene scene = new Scene(view, 1280, 720);
+
+            // ⭐ Create a brand new view
+            MP_ConnectionView newView = new MP_ConnectionView();
+
+            // Rewire the back button
+            newView.getBackBtn().setOnAction(e -> {
+                // Return to mode selection
+                // (QMillionaireMVC will recreate everything cleanly)
+                primaryStage.setScene(null);
+            });
+
+            // ⭐ Recreate the controller with the new view
+            new MP_ConnectionController(
+                    newView,
+                    localPlayerName,
+                    primaryStage,
+                    userManager,
+                    session
+            );
+
+            Scene scene = new Scene(newView, 1280, 720);
             try {
                 String css = getClass().getResource("/Pack_1/style.css").toExternalForm();
                 scene.getStylesheets().add(css);
             } catch (Exception ignored) {}
+
             primaryStage.setScene(scene);
             primaryStage.centerOnScreen();
         });
     }
+
 
     // -------------------------------------------------------------------------
     // GAME VIEW
@@ -197,14 +185,12 @@ public class MP_ConnectionController {
 
             gameView = new MP_QView();
 
-            // 🔥 NEW: Ask server for authoritative list
             client.send(MP_Protocol.format(
                     MP_Protocol.REQUEST_PLAYER_LIST,
                     localPlayerName,
                     ""
             ));
 
-            // Seed the player list from the canonical knownPlayers set
             gameView.getPlayerList().getItems().clear();
             for (String name : knownPlayers) {
                 if (!gameView.getPlayerList().getItems().contains(name)) {
@@ -212,18 +198,14 @@ public class MP_ConnectionController {
                 }
             }
 
-            // Initial name cards with zero totals
             gameView.updatePlayerNameCards(gameView.getPlayerList().getItems(), null);
 
-            // Lifelines visible for ALL players
             gameView.getSuperpositionBtn().setVisible(true);
             gameView.getEntanglementBtn().setVisible(true);
             gameView.getInterferenceBtn().setVisible(true);
 
-            // Label the menu diamond
             gameView.getMenuDiamond().setText("MENU");
 
-            // Chat input
             gameView.getChatInput().setOnAction(e -> {
                 String text = gameView.getChatInput().getText().trim();
                 if (!text.isEmpty()) {
@@ -232,13 +214,18 @@ public class MP_ConnectionController {
                 }
             });
 
-            // Snapshot of players at game start
             List<String> initialPlayers = knownPlayers.stream().collect(Collectors.toList());
 
-            // Callback to return to Network Setup after match ends
-            Runnable returnToNetwork = this::returnToNetworkSetup;
+            Runnable returnToMainMenu = () -> {
+                // Call back into QMillionaireMVC
+                Platform.runLater(() -> {
+                    // We cannot call showModeSelection() directly from here,
+                    // so we signal by clearing the scene.
+                    primaryStage.setScene(null);
+                });
+            };
 
-            // Create appropriate controller
+
             if (isHost) {
                 hostGameController = new MP_HostGameController(
                         gameView,
@@ -248,7 +235,7 @@ public class MP_ConnectionController {
                         initialPlayers,
                         userManager,
                         session,
-                        returnToNetwork
+                        returnToMainMenu
                 );
 
                 gameView.getSuperpositionBtn().setOnAction(e ->
@@ -266,7 +253,7 @@ public class MP_ConnectionController {
                         gameView,
                         client,
                         localPlayerName,
-                        returnToNetwork
+                        returnToMainMenu
                 );
 
                 gameView.getSuperpositionBtn().setOnAction(e ->
@@ -280,7 +267,6 @@ public class MP_ConnectionController {
                 );
             }
 
-            // Waiting room no longer active
             waitingRoomController = null;
 
             Scene gameScene = new Scene(gameView, 1440, 720);
@@ -295,7 +281,6 @@ public class MP_ConnectionController {
             primaryStage.setScene(gameScene);
             primaryStage.centerOnScreen();
 
-            // Apply pending PLAYER_LIST now that gameView exists
             if (pendingPlayerList != null) {
                 List<String> players = Arrays.asList(pendingPlayerList.split(","));
                 gameView.getPlayerList().getItems().setAll(players);
@@ -337,7 +322,6 @@ public class MP_ConnectionController {
 
         Platform.runLater(() -> {
 
-            // Maintain canonical player set
             if (MP_Protocol.JOIN.equals(type)) {
                 knownPlayers.add(sender);
 
@@ -353,17 +337,14 @@ public class MP_ConnectionController {
                 }
             }
 
-            // 🔥 NEW: Handle REQUEST_PLAYER_LIST reply
             if (type.equals(MP_Protocol.REQUEST_PLAYER_LIST)) {
                 return;
             }
 
-            // 🔥 PLAYER_LIST must be handled globally and lifecycle‑aware
             if (type.equals(MP_Protocol.PLAYER_LIST)) {
 
                 List<String> players = Arrays.asList(payload.split(","));
 
-                // 1. Waiting room active → update waiting room
                 if (waitingRoomController != null) {
                     for (String p : players) {
                         waitingRoomController.ensurePlayerListed(p);
@@ -371,36 +352,28 @@ public class MP_ConnectionController {
                     return;
                 }
 
-                // 2. Game view active → update game view
                 if (gameView != null) {
                     gameView.getPlayerList().getItems().setAll(players);
                     gameView.updatePlayerNameCards(players, null);
                     return;
                 }
 
-                // 3. Neither exists yet → cache for later
                 pendingPlayerList = payload;
                 return;
             }
 
-            // Waiting room handles everything else
             if (waitingRoomController != null) {
                 waitingRoomController.handleNetworkMessage(type, sender, payload);
                 return;
             }
 
-            // Ignore game messages until gameView exists
             if (gameView == null) {
-
-                // Cache PLAYER_LIST until gameView exists
                 if (type.equals(MP_Protocol.PLAYER_LIST)) {
                     pendingPlayerList = payload;
                 }
-
                 return;
             }
 
-            // GAME VIEW MESSAGE HANDLING
             switch (type) {
 
                 case MP_Protocol.PLAYER_LIST -> {
@@ -438,7 +411,6 @@ public class MP_ConnectionController {
         });
     }
 
-    // Helper for multi-user joins
     private void broadcastPlayerList() {
         String payload = String.join(",", knownPlayers);
         client.send(MP_Protocol.format(
