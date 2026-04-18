@@ -4,6 +4,7 @@ import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
+import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -34,6 +35,9 @@ public class MP_ConnectionController {
     private boolean isHost = false;
 
     private boolean recenteringInstalled = false;
+
+    /** Cache PLAYER_LIST if it arrives before gameView exists */
+    private String pendingPlayerList = null;
 
     /**
      * Canonical set of all known players (host + all clients).
@@ -89,7 +93,6 @@ public class MP_ConnectionController {
         // BACK BUTTON
         view.getBackBtn().setOnAction(e -> {
             view.log("Back to main menu requested.");
-            // Hook into your main MVC if needed
         });
     }
 
@@ -162,6 +165,13 @@ public class MP_ConnectionController {
 
             gameView = new MP_QView();
 
+            // 🔥 NEW: Ask server for authoritative list
+            client.send(MP_Protocol.format(
+                    MP_Protocol.REQUEST_PLAYER_LIST,
+                    localPlayerName,
+                    ""
+            ));
+
             // Seed the player list from the canonical knownPlayers set
             gameView.getPlayerList().getItems().clear();
             for (String name : knownPlayers) {
@@ -170,8 +180,7 @@ public class MP_ConnectionController {
                 }
             }
 
-            // Initial name cards with zero totals (host/client controllers
-            // will update earnings later)
+            // Initial name cards with zero totals
             gameView.updatePlayerNameCards(gameView.getPlayerList().getItems(), null);
 
             // Lifelines visible for ALL players
@@ -204,7 +213,6 @@ public class MP_ConnectionController {
                         initialPlayers
                 );
 
-                // Host lifeline buttons (host is a normal player)
                 gameView.getSuperpositionBtn().setOnAction(e ->
                         hostGameController.applySuperposition(localPlayerName)
                 );
@@ -222,7 +230,6 @@ public class MP_ConnectionController {
                         localPlayerName
                 );
 
-                // Client lifeline buttons send requests to host
                 gameView.getSuperpositionBtn().setOnAction(e ->
                         clientGameController.requestSuperposition()
                 );
@@ -248,6 +255,14 @@ public class MP_ConnectionController {
 
             primaryStage.setScene(gameScene);
             primaryStage.centerOnScreen();
+
+            // Apply pending PLAYER_LIST now that gameView exists
+            if (pendingPlayerList != null) {
+                List<String> players = Arrays.asList(pendingPlayerList.split(","));
+                gameView.getPlayerList().getItems().setAll(players);
+                gameView.updatePlayerNameCards(players, null);
+                pendingPlayerList = null;
+            }
 
         });
     }
@@ -287,29 +302,73 @@ public class MP_ConnectionController {
             if (MP_Protocol.JOIN.equals(type)) {
                 knownPlayers.add(sender);
 
-                // Host echoes its own JOIN back to new players so they see the host
-                if (isHost && !sender.equals(localPlayerName)) {
-                    client.send(MP_Protocol.format(
-                            MP_Protocol.JOIN,
-                            localPlayerName,
-                            ""
-                    ));
+                if (isHost) {
+                    broadcastPlayerList();
                 }
 
             } else if (MP_Protocol.LEAVE.equals(type)) {
                 knownPlayers.remove(sender);
+
+                if (isHost) {
+                    broadcastPlayerList();
+                }
             }
 
-            // Waiting room gets first chance
+            // 🔥 NEW: Handle REQUEST_PLAYER_LIST reply
+            if (type.equals(MP_Protocol.REQUEST_PLAYER_LIST)) {
+                return;
+            }
+
+            // 🔥 PLAYER_LIST must be handled globally and lifecycle‑aware
+            if (type.equals(MP_Protocol.PLAYER_LIST)) {
+
+                List<String> players = Arrays.asList(payload.split(","));
+
+                // 1. Waiting room active → update waiting room
+                if (waitingRoomController != null) {
+                    for (String p : players) {
+                        waitingRoomController.ensurePlayerListed(p);
+                    }
+                    return;
+                }
+
+                // 2. Game view active → update game view
+                if (gameView != null) {
+                    gameView.getPlayerList().getItems().setAll(players);
+                    gameView.updatePlayerNameCards(players, null);
+                    return;
+                }
+
+                // 3. Neither exists yet → cache for later
+                pendingPlayerList = payload;
+                return;
+            }
+
+            // Waiting room handles everything else
             if (waitingRoomController != null) {
                 waitingRoomController.handleNetworkMessage(type, sender, payload);
                 return;
             }
 
             // Ignore game messages until gameView exists
-            if (gameView == null) return;
+            if (gameView == null) {
 
+                // Cache PLAYER_LIST until gameView exists
+                if (type.equals(MP_Protocol.PLAYER_LIST)) {
+                    pendingPlayerList = payload;
+                }
+
+                return;
+            }
+
+            // GAME VIEW MESSAGE HANDLING
             switch (type) {
+
+                case MP_Protocol.PLAYER_LIST -> {
+                    List<String> players = Arrays.asList(payload.split(","));
+                    gameView.getPlayerList().getItems().setAll(players);
+                    gameView.updatePlayerNameCards(players, null);
+                }
 
                 case MP_Protocol.CHAT -> {
                     gameView.appendChat(sender + ": " + payload);
@@ -339,4 +398,15 @@ public class MP_ConnectionController {
             }
         });
     }
+
+    // Helper for multi-user joins
+    private void broadcastPlayerList() {
+        String payload = String.join(",", knownPlayers);
+        client.send(MP_Protocol.format(
+                MP_Protocol.PLAYER_LIST,
+                localPlayerName,
+                payload
+        ));
+    }
+
 }

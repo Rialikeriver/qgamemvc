@@ -280,9 +280,14 @@ public class MP_ClientGameController {
             totals.put(name, money);
 
             Label lbl = new Label(name + " — " + correct.toUpperCase() + " — $" + money);
-            lbl.setStyle("-fx-text-fill: " +
-                    (alive.equals("alive") ? "lightgreen" : "red") +
-                    "; -fx-font-size: 18px;");
+            
+            String hex = mpView.getPlayerColor(name);
+
+            lbl.setStyle(
+                "-fx-text-fill: " + hex + ";" +
+                "-fx-font-size: 18px;"
+            );
+
 
             list.getChildren().add(lbl);
         }

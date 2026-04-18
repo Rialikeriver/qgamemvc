@@ -24,7 +24,8 @@ public class MP_Protocol {
     public static final String LIFELINE  = "LIFELINE";  // LIFELINE@HOST@type|data|usedBy
     public static final String SCOREBOARD_TIMER = "SCOREBOARD_TIMER";  // SCOREBOARD_TIMER@HOST@secondsRemaining
     public static final String CONTINUE  = "CONTINUE";  // CONTINUE@playerName@
-    public static final String PLAYER_LIST = "PLAYER_LIST"; // PLAYER_LIST@HOST@name,color,connected,ready,earnings|...
+    public static final String PLAYER_LIST = "PLAYER_LIST"; // PLAYER_LIST@HOST@name1,name2,name3,...
+    public static final String REQUEST_PLAYER_LIST = "REQUEST_PLAYER_LIST";
 
     // Error / status
     public static final String ERROR     = "ERROR";     // ERROR@HOST@message;

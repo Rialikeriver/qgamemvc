@@ -81,18 +81,16 @@ public class MP_HostGameController {
         List<Question> questions = QuestionLoader.loadQuestions("BeMillionaireQuestions.json");
         this.model = new QModel(questions);
 
-        // Seed all players (host + clients) as alive with zero earnings
-        if (initialPlayers != null) {
+        // Seed players (host + any known clients at game start)
+        if (initialPlayers != null && !initialPlayers.isEmpty()) {
             for (String p : initialPlayers) {
-                if (p == null || p.isBlank()) continue;
                 playerStatus.put(p, true);
-                playerEarnings.putIfAbsent(p, 0);
+                playerEarnings.put(p, 0);
             }
+        } else {
+            playerStatus.put(this.hostName, true);
+            playerEarnings.put(this.hostName, 0);
         }
-
-        // Ensure host is present
-        playerStatus.putIfAbsent(this.hostName, true);
-        playerEarnings.putIfAbsent(this.hostName, 0);
 
         setupLocalBindings();
         setupTimer();
@@ -107,19 +105,16 @@ public class MP_HostGameController {
         switch (type) {
             case MP_Protocol.ANSWER -> handlePlayerAnswer(sender, payload);
             case MP_Protocol.READY  -> {
-                // If READY ever appears mid-game, treat as "alive"
                 playerStatus.put(sender, true);
                 playerEarnings.putIfAbsent(sender, 0);
             }
             case MP_Protocol.LIFELINE -> handleLifelineRequest(sender, payload);
             case MP_Protocol.CONTINUE -> continueClicks.add(sender);
             case MP_Protocol.JOIN -> {
-                // Late joins during game: mark as connected, zero earnings
                 playerStatus.putIfAbsent(sender, true);
                 playerEarnings.putIfAbsent(sender, 0);
             }
             case MP_Protocol.LEAVE -> {
-                // Mark as disconnected
                 playerStatus.put(sender, false);
             }
             default -> {}
@@ -198,8 +193,6 @@ public class MP_HostGameController {
     private String serializeQuestion(Question q) {
         StringBuilder sb = new StringBuilder();
 
-        // Send the current question index as the first field so clients can
-        // highlight the correct ladder tier reliably.
         sb.append(model.getCurrentQuestionIndex()).append("|")
           .append(q.getTier()).append("|")
           .append(q.getQuestionText().replace("|", "/")).append("|");
@@ -476,7 +469,7 @@ public class MP_HostGameController {
         VBox list = overlay.getPlayerListBox();
 
         for (String player : correctness.keySet()) {
-            boolean alive = playerStatus.getOrDefault(player, false);
+            boolean alive = playerStatus.get(player);
             boolean correct = correctness.get(player);
             int money = playerEarnings.getOrDefault(player, 0);
 
@@ -486,10 +479,13 @@ public class MP_HostGameController {
                 " — $" + money
             );
 
+            String hex = mpView.getPlayerColor(player);
+
             lbl.setStyle(
-                "-fx-text-fill: " + (alive ? "lightgreen" : "red") +
-                "; -fx-font-size: 18px;"
+                "-fx-text-fill: " + hex + ";" +
+                "-fx-font-size: 18px;"
             );
+
 
             list.getChildren().add(lbl);
         }
@@ -513,8 +509,7 @@ public class MP_HostGameController {
                     String.valueOf(scoreboardSecondsRemaining)
             ));
 
-            // Require EVERY alive player to click Continue
-            boolean allClicked = continueClicks.containsAll(playerStatus.keySet());
+            boolean allClicked = continueClicks.size() >= playerStatus.size();
 
             if (scoreboardSecondsRemaining <= 0 || allClicked) {
                 scoreboardTimer.stop();

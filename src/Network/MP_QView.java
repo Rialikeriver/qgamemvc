@@ -503,4 +503,9 @@ public class MP_QView extends StackPane {
 
     public Label getQuestionLabel() { return questionLabel; }
     public Label getEarningsLabel() { return earningsLabel; }
+    
+    public String getPlayerColor(String player) {
+        return playerColors.getOrDefault(player, "#ffffff");
+    }
+
 }

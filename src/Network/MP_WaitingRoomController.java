@@ -58,22 +58,32 @@ public class MP_WaitingRoomController {
             ));
             view.getReadyBtn().setDisable(true);
             view.getStatusLabel().setText("You are ready");
+
+            // Immediately reflect local readiness
+            markReady(localPlayerName);
         });
 
         view.getStartBtn().setOnAction(e -> {
+            if (onStartGame != null) onStartGame.run();
+
             client.send(MP_Protocol.format(
                     MP_Protocol.START,
                     localPlayerName,
                     ""
             ));
         });
+
     }
 
     public void handleNetworkMessage(String type, String sender, String payload) {
         switch (type) {
             case MP_Protocol.JOIN -> addPlayer(sender);
             case MP_Protocol.LEAVE -> removePlayer(sender);
-            case MP_Protocol.READY -> markReady(sender);
+            case MP_Protocol.READY -> {
+                if (!sender.equals(localPlayerName)) {
+                    markReady(sender);
+                }
+            }
             case MP_Protocol.START -> beginGame();
         }
     }
