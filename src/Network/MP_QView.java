@@ -10,6 +10,23 @@ import javafx.scene.layout.*;
 
 import java.util.*;
 
+/**
+ * Multiplayer Question View (MP_QView)
+ *
+ * Displays:
+ * - Question text
+ * - Four answer buttons
+ * - Lifeline buttons
+ * - Shared timer
+ * - Player name cards (top, with colors and totals)
+ * - Money ladder (left, with pips)
+ * - Player list + chat (right)
+ *
+ * This version restores:
+ * - Local color palette and per-player color assignment
+ * - Player cards rendering
+ * - Ladder pips using the same palette
+ */
 public class MP_QView extends StackPane {
 
     private final BorderPane gamePane;
@@ -31,23 +48,31 @@ public class MP_QView extends StackPane {
     private final ListView<String> playerList;
     private final Label sharedTimerLabel;
 
+    // Local color palette for players (restored)
     private final Map<String, String> playerColors = new HashMap<>();
     private int nextColorIndex = 0;
     private static final String[] COLOR_PALETTE = {
-            "#ff5555", "#55ff55", "#5599ff", "#ffcc33",
-            "#ff66cc", "#66cccc", "#cc66ff", "#ffaa88"
+            "#ff66cc", // magenta-ish (first player)
+            "#55ff55",
+            "#5599ff",
+            "#ffcc33",
+            "#ff5555",
+            "#66cccc",
+            "#cc66ff",
+            "#ffaa88"
     };
 
     public MP_QView() {
 
+        // ---------------------------------------------------------------------
+        // ROOT LAYOUT
+        // ---------------------------------------------------------------------
         gamePane = new BorderPane();
         gamePane.getStyleClass().add("game-pane");
-
-        // Slightly lower everything visually
         gamePane.setPadding(new Insets(40, 15, 40, 45));
 
         try {
-            var resource = getClass().getResource("/WWTB_A_Millionaire_Background.png");
+            var resource = getClass().getResource("/assets/WWTB_A_Millionaire_Background.png");
             if (resource != null) {
                 gamePane.setStyle(
                         "-fx-background-image: url('" + resource.toExternalForm() + "');" +
@@ -60,20 +85,25 @@ public class MP_QView extends StackPane {
             e.printStackTrace();
         }
 
-        // TOP: menu diamond
+        // ---------------------------------------------------------------------
+        // TOP: MENU DIAMOND
+        // ---------------------------------------------------------------------
         menuDiamond = new Button();
         menuDiamond.getStyleClass().add("menu-diamond");
-
         StackPane topPane = new StackPane(menuDiamond);
         StackPane.setAlignment(menuDiamond, Pos.TOP_RIGHT);
         gamePane.setTop(topPane);
 
-        // LEFT: money ladder
+        // ---------------------------------------------------------------------
+        // LEFT: MONEY LADDER
+        // ---------------------------------------------------------------------
         moneyLadder = createLadder();
         moneyLadder.setStyle("-fx-background-color: rgba(0,0,0,0.5); -fx-background-radius: 10;");
         gamePane.setLeft(moneyLadder);
 
+        // ---------------------------------------------------------------------
         // CENTER COLUMN
+        // ---------------------------------------------------------------------
         VBox centerBox = new VBox(15);
         centerBox.setAlignment(Pos.TOP_CENTER);
         centerBox.setPadding(new Insets(20, 0, 0, 0));
@@ -83,7 +113,7 @@ public class MP_QView extends StackPane {
         playerNameCardsBar.setAlignment(Pos.CENTER);
         playerNameCardsBar.setPadding(new Insets(5, 0, 10, 0));
 
-        // Question
+        // Question label
         questionLabel = new Label("Loading...");
         questionLabel.getStyleClass().add("question-box");
         questionLabel.setWrapText(true);
@@ -118,7 +148,7 @@ public class MP_QView extends StackPane {
         HBox lifelineBox = new HBox(20, superpositionBtn, entanglementBtn, interferenceBtn);
         lifelineBox.setAlignment(Pos.CENTER);
 
-        // TIMER (aligned under ENTANGLEMENT)
+        // Shared timer
         sharedTimerLabel = new Label("30s");
         sharedTimerLabel.setStyle(
                 "-fx-font-size: 38px;" +
@@ -141,12 +171,10 @@ public class MP_QView extends StackPane {
                 "-fx-effect: dropshadow(gaussian, #000000, 8, 0.3, 0, 0);"
         );
 
-        // Correct alignment: slight right shift (14px)
         HBox timerRow = new HBox(timerCard);
         timerRow.setAlignment(Pos.CENTER);
         HBox.setMargin(timerCard, new Insets(0, 0, 0, 14));
 
-        // Add everything to center column
         centerBox.getChildren().addAll(
                 playerNameCardsBar,
                 questionLabel,
@@ -155,11 +183,12 @@ public class MP_QView extends StackPane {
                 timerRow
         );
 
-        // Shift entire center column right (matches question pane)
         BorderPane.setMargin(centerBox, new Insets(20, 0, 0, 40));
         gamePane.setCenter(centerBox);
 
-        // RIGHT: players + chat
+        // ---------------------------------------------------------------------
+        // RIGHT: PLAYER LIST + CHAT
+        // ---------------------------------------------------------------------
         VBox rightPane = new VBox(15);
         rightPane.setPadding(new Insets(0, 0, 0, 20));
         rightPane.setPrefWidth(280);
@@ -333,6 +362,16 @@ public class MP_QView extends StackPane {
         earningsLabel.setText("$" + totalMoney);
     }
 
+    // -------------------------------------------------------------------------
+    // Player cards (restored)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Updates the top player name cards.
+     *
+     * @param players list of player names (in display order)
+     * @param totals  map name -> total earnings (may be null for 0)
+     */
     public void updatePlayerNameCards(List<String> players, Map<String, Integer> totals) {
         playerNameCardsBar.getChildren().clear();
         if (players == null || players.isEmpty()) return;
@@ -376,6 +415,15 @@ public class MP_QView extends StackPane {
         }
     }
 
+    // -------------------------------------------------------------------------
+    // Ladder pips (restored)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Updates ladder pips for each tier.
+     *
+     * @param tierToPlayers map tierIndex -> list of player names who hit that tier
+     */
     public void updateLadderMarkers(Map<Integer, List<String>> tierToPlayers) {
         if (tierToPlayers == null) {
             for (Label cell : ladderCells) {
@@ -417,6 +465,10 @@ public class MP_QView extends StackPane {
         }
     }
 
+    // -------------------------------------------------------------------------
+    // Overlay helpers
+    // -------------------------------------------------------------------------
+
     public void showOverlay(Node overlay) {
         getChildren().add(overlay);
     }
@@ -424,6 +476,10 @@ public class MP_QView extends StackPane {
     public void hideOverlay(Node overlay) {
         getChildren().remove(overlay);
     }
+
+    // -------------------------------------------------------------------------
+    // Accessors
+    // -------------------------------------------------------------------------
 
     public TextArea getChatLog() { return chatLog; }
     public TextField getChatInput() { return chatInput; }

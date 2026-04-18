@@ -41,7 +41,7 @@ public class QView extends StackPane {
         gamePane.setPadding(new Insets(20));
 
         try {
-            var resource = getClass().getResource("/WWTB_A_Millionaire_Background.png");
+        	var resource = getClass().getResource("/assets/WWTB_A_Millionaire_Background.png");
             if (resource != null) {
                 gamePane.setStyle(
                     "-fx-background-image: url('" + resource.toExternalForm() + "');" +

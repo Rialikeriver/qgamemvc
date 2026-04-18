@@ -30,7 +30,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class MP_HostGameController {
 
-    private static final int QUESTION_TIME = 20;
+    private static final int QUESTION_TIME = 40;
     private static final int SCOREBOARD_TIME = 30;
 
     private final MP_QView mpView;
@@ -42,15 +42,18 @@ public class MP_HostGameController {
     private Timeline timer;
     private int secondsRemaining;
 
+    // Lifeline state (per game)
     private boolean superpositionUsed = false;
     private boolean entanglementUsed = false;
     private boolean interferenceUsed = false;
     private String entangledLabel = null;
 
+    // Scoreboard overlay timer
     private Timeline scoreboardTimer;
     private int scoreboardSecondsRemaining = SCOREBOARD_TIME;
     private final Set<String> continueClicks = new HashSet<>();
 
+    // Current question answers and player status
     private final Map<String, String> currentAnswers = new ConcurrentHashMap<>();
     private final Map<String, Boolean> playerStatus = new ConcurrentHashMap<>();
 
@@ -63,38 +66,69 @@ public class MP_HostGameController {
     public MP_HostGameController(MP_QView mpView,
                                  MP_Server server,
                                  MP_Client client,
-                                 String hostName) {
+                                 String hostName,
+                                 List<String> initialPlayers) {
 
         this.mpView = mpView;
         this.server = server;
         this.client = client;
         this.hostName = (hostName == null || hostName.isBlank()) ? "Host" : hostName;
 
+        // Menu diamond
         mpView.getMenuDiamond().setOnAction(e -> showSettingsMenu());
 
+        // Load questions and create model
         List<Question> questions = QuestionLoader.loadQuestions("BeMillionaireQuestions.json");
         this.model = new QModel(questions);
 
-        playerStatus.put(this.hostName, true);
-        playerEarnings.put(this.hostName, 0);
+        // Seed all players (host + clients) as alive with zero earnings
+        if (initialPlayers != null) {
+            for (String p : initialPlayers) {
+                if (p == null || p.isBlank()) continue;
+                playerStatus.put(p, true);
+                playerEarnings.putIfAbsent(p, 0);
+            }
+        }
+
+        // Ensure host is present
+        playerStatus.putIfAbsent(this.hostName, true);
+        playerEarnings.putIfAbsent(this.hostName, 0);
 
         setupLocalBindings();
         setupTimer();
         startNewQuestion();
     }
 
+    // -------------------------------------------------------------------------
+    // NETWORK MESSAGE HANDLING
+    // -------------------------------------------------------------------------
+
     public void handleNetworkMessage(String type, String sender, String payload) {
         switch (type) {
             case MP_Protocol.ANSWER -> handlePlayerAnswer(sender, payload);
             case MP_Protocol.READY  -> {
+                // If READY ever appears mid-game, treat as "alive"
                 playerStatus.put(sender, true);
                 playerEarnings.putIfAbsent(sender, 0);
             }
             case MP_Protocol.LIFELINE -> handleLifelineRequest(sender, payload);
             case MP_Protocol.CONTINUE -> continueClicks.add(sender);
+            case MP_Protocol.JOIN -> {
+                // Late joins during game: mark as connected, zero earnings
+                playerStatus.putIfAbsent(sender, true);
+                playerEarnings.putIfAbsent(sender, 0);
+            }
+            case MP_Protocol.LEAVE -> {
+                // Mark as disconnected
+                playerStatus.put(sender, false);
+            }
             default -> {}
         }
     }
+
+    // -------------------------------------------------------------------------
+    // LOCAL UI BINDINGS
+    // -------------------------------------------------------------------------
 
     private void setupLocalBindings() {
         mpView.getBtnA().setOnAction(e -> handleLocalAnswer("A"));
@@ -126,6 +160,10 @@ public class MP_HostGameController {
     private void resetLifelinesForNewQuestion() {
         // Lifelines are per-game, not per-question.
     }
+
+    // -------------------------------------------------------------------------
+    // QUESTION LOOP
+    // -------------------------------------------------------------------------
 
     private void startNewQuestion() {
         currentAnswers.clear();
@@ -159,7 +197,10 @@ public class MP_HostGameController {
 
     private String serializeQuestion(Question q) {
         StringBuilder sb = new StringBuilder();
-        sb.append(q.getId()).append("|")
+
+        // Send the current question index as the first field so clients can
+        // highlight the correct ladder tier reliably.
+        sb.append(model.getCurrentQuestionIndex()).append("|")
           .append(q.getTier()).append("|")
           .append(q.getQuestionText().replace("|", "/")).append("|");
 
@@ -311,9 +352,9 @@ public class MP_HostGameController {
         ));
     }
 
-    // ------------------------------------------------------------
-    // LIFELINES (GLOBAL, HOST-AUTHORITATIVE, NOT HOST-CONTROLLED)
-    // ------------------------------------------------------------
+    // -------------------------------------------------------------------------
+    // LIFELINES (GLOBAL, HOST-AUTHORITATIVE)
+    // -------------------------------------------------------------------------
 
     private void handleLifelineRequest(String sender, String payload) {
         String[] parts = payload.split("\\|");
@@ -397,9 +438,9 @@ public class MP_HostGameController {
         mpView.appendChat("★ " + usedBy + " used INTERFERENCE (reveals: " + revealedLabel + ")");
     }
 
-    // ------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // GAME OVER & SCOREBOARD
-    // ------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
     private void handleGameOver() {
         if (timer != null) {
@@ -435,7 +476,7 @@ public class MP_HostGameController {
         VBox list = overlay.getPlayerListBox();
 
         for (String player : correctness.keySet()) {
-            boolean alive = playerStatus.get(player);
+            boolean alive = playerStatus.getOrDefault(player, false);
             boolean correct = correctness.get(player);
             int money = playerEarnings.getOrDefault(player, 0);
 
@@ -472,7 +513,8 @@ public class MP_HostGameController {
                     String.valueOf(scoreboardSecondsRemaining)
             ));
 
-            boolean allClicked = continueClicks.size() >= playerStatus.size();
+            // Require EVERY alive player to click Continue
+            boolean allClicked = continueClicks.containsAll(playerStatus.keySet());
 
             if (scoreboardSecondsRemaining <= 0 || allClicked) {
                 scoreboardTimer.stop();
@@ -493,6 +535,10 @@ public class MP_HostGameController {
             overlay.getContinueBtn().setDisable(true);
         });
     }
+
+    // -------------------------------------------------------------------------
+    // SETTINGS MENU
+    // -------------------------------------------------------------------------
 
     private void showSettingsMenu() {
         ContextMenu settingsMenu = new ContextMenu();

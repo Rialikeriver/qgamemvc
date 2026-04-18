@@ -21,26 +21,18 @@ public class MP_Protocol {
     public static final String TIMER     = "TIMER";     // TIMER@HOST@seconds
     public static final String BOARD     = "BOARD";     // BOARD@HOST@payload
     public static final String WIN       = "WIN";       // WIN@HOST@payload
-    public static final String LIFELINE  = "LIFELINE";  // LIFELINE@HOST@type|data
+    public static final String LIFELINE  = "LIFELINE";  // LIFELINE@HOST@type|data|usedBy
     public static final String SCOREBOARD_TIMER = "SCOREBOARD_TIMER";  // SCOREBOARD_TIMER@HOST@secondsRemaining
     public static final String CONTINUE  = "CONTINUE";  // CONTINUE@playerName@
-
-
+    public static final String PLAYER_LIST = "PLAYER_LIST"; // PLAYER_LIST@HOST@name,color,connected,ready,earnings|...
 
     // Error / status
     public static final String ERROR     = "ERROR";     // ERROR@HOST@message;
 
-    /**
-     * Formats a message according to the protocol.
-     */
     public static String format(String type, String sender, String payload) {
         return type + SEP + sender + SEP + (payload == null ? "" : payload);
     }
 
-    /**
-     * Parses a raw message into [type, sender, payload].
-     * Always returns an array of length 3.
-     */
     public static String[] parse(String rawMessage) {
         String[] parts = rawMessage.split(SEP, 3);
         String[] out = new String[3];

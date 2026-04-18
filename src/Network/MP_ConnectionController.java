@@ -4,6 +4,11 @@ import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 /**
  * Handles hosting/joining a multiplayer session and transitioning
  * into the multiplayer game view (MP_QView).
@@ -30,6 +35,13 @@ public class MP_ConnectionController {
 
     private boolean recenteringInstalled = false;
 
+    /**
+     * Canonical set of all known players (host + all clients).
+     * This is updated on every JOIN/LEAVE and used to seed both
+     * the waiting room and the in‑game player list.
+     */
+    private final Set<String> knownPlayers = new LinkedHashSet<>();
+
     public MP_ConnectionController(MP_ConnectionView view,
                                    String localPlayerName,
                                    Stage primaryStage) {
@@ -41,9 +53,16 @@ public class MP_ConnectionController {
                         ? "Player"
                         : localPlayerName;
 
+        // Local player is always known
+        knownPlayers.add(this.localPlayerName);
+
         wireActions();
         installWindowRecentering();
     }
+
+    // -------------------------------------------------------------------------
+    // UI WIRING (HOST / JOIN / BACK)
+    // -------------------------------------------------------------------------
 
     private void wireActions() {
 
@@ -55,6 +74,7 @@ public class MP_ConnectionController {
             view.log("Server started on port " + port + ". Waiting for players...");
             isHost = true;
 
+            // Host also connects as a client to its own server
             connectAsClient("127.0.0.1", port);
         });
 
@@ -73,14 +93,18 @@ public class MP_ConnectionController {
         });
     }
 
+    /**
+     * Connects as a client and then transitions to the waiting room.
+     * We create the waiting room BEFORE sending JOIN so the JOIN
+     * message is never "lost" before the controller exists.
+     */
     private void connectAsClient(String ip, int port) {
         client = new MP_Client();
         try {
             client.connect(ip, port, this::handleIncomingMessage);
             view.log("Connected to " + ip + ":" + port);
 
-            client.send(MP_Protocol.format(MP_Protocol.JOIN, localPlayerName, ""));
-
+            // Move to waiting room (controller will send JOIN once ready)
             switchToWaitingRoom();
 
         } catch (Exception ex) {
@@ -88,9 +112,9 @@ public class MP_ConnectionController {
         }
     }
 
-    // ------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // WAITING ROOM
-    // ------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
     private void switchToWaitingRoom() {
         Platform.runLater(() -> {
@@ -106,6 +130,18 @@ public class MP_ConnectionController {
                             this::switchToGameView   // callback when START received
                     );
 
+            // Ensure the local player is visible immediately in the waiting room
+            waitingRoomController.addLocalPlayerImmediately();
+
+            // Seed any already-known players (e.g., if we joined late)
+            for (String name : knownPlayers) {
+                waitingRoomController.ensurePlayerListed(name);
+            }
+
+            // Now that the controller exists, announce JOIN so everyone
+            // (including ourselves) sees this player.
+            client.send(MP_Protocol.format(MP_Protocol.JOIN, localPlayerName, ""));
+
             Scene scene = new Scene(wrView, 1280, 720);
 
             try {
@@ -117,21 +153,25 @@ public class MP_ConnectionController {
         });
     }
 
-    // ------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // GAME VIEW
-    // ------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
     private void switchToGameView() {
         Platform.runLater(() -> {
 
             gameView = new MP_QView();
 
-            // Ensure local player appears immediately in the player list
-            if (!gameView.getPlayerList().getItems().contains(localPlayerName)) {
-                gameView.getPlayerList().getItems().add(localPlayerName);
+            // Seed the player list from the canonical knownPlayers set
+            gameView.getPlayerList().getItems().clear();
+            for (String name : knownPlayers) {
+                if (!gameView.getPlayerList().getItems().contains(name)) {
+                    gameView.getPlayerList().getItems().add(name);
+                }
             }
 
-            // Initial name cards with zero totals
+            // Initial name cards with zero totals (host/client controllers
+            // will update earnings later)
             gameView.updatePlayerNameCards(gameView.getPlayerList().getItems(), null);
 
             // Lifelines visible for ALL players
@@ -151,13 +191,17 @@ public class MP_ConnectionController {
                 }
             });
 
+            // Snapshot of players at game start
+            List<String> initialPlayers = knownPlayers.stream().collect(Collectors.toList());
+
             // Create appropriate controller
             if (isHost) {
                 hostGameController = new MP_HostGameController(
                         gameView,
                         server,
                         client,
-                        localPlayerName
+                        localPlayerName,
+                        initialPlayers
                 );
 
                 // Host lifeline buttons (host is a normal player)
@@ -190,6 +234,7 @@ public class MP_ConnectionController {
                 );
             }
 
+            // Waiting room no longer active
             waitingRoomController = null;
 
             Scene gameScene = new Scene(gameView, 1440, 720);
@@ -207,9 +252,9 @@ public class MP_ConnectionController {
         });
     }
 
-    // ------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // WINDOW RECENTERING
-    // ------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
     private void installWindowRecentering() {
         if (recenteringInstalled) return;
@@ -226,9 +271,9 @@ public class MP_ConnectionController {
         });
     }
 
-    // ------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // MESSAGE ROUTING
-    // ------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
     private void handleIncomingMessage(String raw) {
         String[] parts = MP_Protocol.parse(raw);
@@ -237,6 +282,23 @@ public class MP_ConnectionController {
         String payload = parts[2];
 
         Platform.runLater(() -> {
+
+            // Maintain canonical player set
+            if (MP_Protocol.JOIN.equals(type)) {
+                knownPlayers.add(sender);
+
+                // Host echoes its own JOIN back to new players so they see the host
+                if (isHost && !sender.equals(localPlayerName)) {
+                    client.send(MP_Protocol.format(
+                            MP_Protocol.JOIN,
+                            localPlayerName,
+                            ""
+                    ));
+                }
+
+            } else if (MP_Protocol.LEAVE.equals(type)) {
+                knownPlayers.remove(sender);
+            }
 
             // Waiting room gets first chance
             if (waitingRoomController != null) {

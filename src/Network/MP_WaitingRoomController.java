@@ -28,6 +28,27 @@ public class MP_WaitingRoomController {
         wireActions();
     }
 
+    /**
+     * Called by MP_ConnectionController immediately after construction
+     * to ensure the local player is visible in the waiting room even
+     * before any JOIN messages are processed.
+     */
+    public void addLocalPlayerImmediately() {
+        ensurePlayerListed(localPlayerName);
+    }
+
+    /**
+     * Ensures a player is present in the waiting room list and ready map.
+     * Safe to call multiple times.
+     */
+    public void ensurePlayerListed(String name) {
+        if (!view.getPlayerList().getItems().contains(name)) {
+            view.getPlayerList().getItems().add(name);
+        }
+        readyMap.putIfAbsent(name, false);
+        updateStatus();
+    }
+
     private void wireActions() {
         view.getReadyBtn().setOnAction(e -> {
             client.send(MP_Protocol.format(
@@ -58,15 +79,13 @@ public class MP_WaitingRoomController {
     }
 
     private void addPlayer(String name) {
-        if (!view.getPlayerList().getItems().contains(name)) {
-            view.getPlayerList().getItems().add(name);
-            readyMap.put(name, false);
-        }
+        ensurePlayerListed(name);
     }
 
     private void removePlayer(String name) {
         view.getPlayerList().getItems().remove(name);
         readyMap.remove(name);
+        updateStatus();
     }
 
     private void markReady(String name) {
@@ -80,7 +99,7 @@ public class MP_WaitingRoomController {
     }
 
     private boolean allReady() {
-        return readyMap.values().stream().allMatch(v -> v);
+        return !readyMap.isEmpty() && readyMap.values().stream().allMatch(v -> v);
     }
 
     private void updateStatus() {

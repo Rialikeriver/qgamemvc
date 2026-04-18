@@ -27,7 +27,7 @@ public class MP_Server extends Thread {
                 synchronized (clients) {
                     clients.add(handler);
                 }
-                new Thread(handler).start();
+                new Thread(handler, "MP_ClientHandler").start();
             }
         } catch (IOException e) {
             System.err.println("Server Error: " + e.getMessage());
@@ -49,12 +49,12 @@ public class MP_Server extends Thread {
         } catch (IOException ignored) {}
     }
 
-    // Inner class to handle individual client connections
     private class ClientHandler implements Runnable {
         private final Socket socket;
         private PrintWriter out;
         private BufferedReader in;
         private final MP_Server server;
+        private String playerName;
 
         public ClientHandler(Socket socket, MP_Server server) {
             this.socket = socket;
@@ -65,11 +65,18 @@ public class MP_Server extends Thread {
         public void run() {
             try {
                 out = new PrintWriter(socket.getOutputStream(), true);
-                in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                in  = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
                 String input;
                 while ((input = in.readLine()) != null) {
-                    // When a client sends a message, broadcast it to everyone
+                    String[] parts = MP_Protocol.parse(input);
+                    String type   = parts[0];
+                    String sender = parts[1];
+
+                    if (MP_Protocol.JOIN.equals(type)) {
+                        playerName = sender;
+                    }
+
                     server.broadcast(input);
                 }
             } catch (IOException e) {
@@ -77,6 +84,13 @@ public class MP_Server extends Thread {
             } finally {
                 synchronized (clients) {
                     clients.remove(this);
+                }
+                if (playerName != null && !playerName.isBlank()) {
+                    server.broadcast(MP_Protocol.format(
+                            MP_Protocol.LEAVE,
+                            playerName,
+                            ""
+                    ));
                 }
                 try {
                     if (socket != null) socket.close();

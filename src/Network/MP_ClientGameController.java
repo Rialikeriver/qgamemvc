@@ -41,6 +41,10 @@ public class MP_ClientGameController {
         wireAnswerButtons();
     }
 
+    // -------------------------------------------------------------------------
+    // LOCAL ANSWER HANDLING
+    // -------------------------------------------------------------------------
+
     private void wireAnswerButtons() {
         mpView.getBtnA().setOnAction(e -> sendAnswer("A"));
         mpView.getBtnB().setOnAction(e -> sendAnswer("B"));
@@ -86,9 +90,9 @@ public class MP_ClientGameController {
         client.send(msg);
     }
 
-    // ------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // LIFELINE REQUESTS (CLIENT → HOST)
-    // ------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
     public void requestSuperposition() {
         String payload = "REQUEST|SUPERPOSITION";
@@ -117,9 +121,9 @@ public class MP_ClientGameController {
         ));
     }
 
-    // ------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // NETWORK MESSAGE HANDLING
-    // ------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
     public void handleNetworkMessage(String type, String sender, String payload) {
         switch (type) {
@@ -148,7 +152,8 @@ public class MP_ClientGameController {
         String[] parts = payload.split("\\|");
         if (parts.length < 3) return;
 
-        String tierStr = parts[1];
+        // Host sends: questionIndex|tier|questionText|...
+        String indexStr = parts[0];
         String questionText = parts[2];
 
         mpView.getQuestionLabel().setText(questionText);
@@ -176,8 +181,8 @@ public class MP_ClientGameController {
         }
 
         try {
-            int tier = Integer.parseInt(tierStr);
-            int index = Math.max(0, tier - 1);
+            int qIndex = Integer.parseInt(indexStr);
+            int index = Math.max(0, qIndex);
             mpView.updateLadderHighlight(index);
         } catch (NumberFormatException ignored) {}
     }
@@ -222,6 +227,10 @@ public class MP_ClientGameController {
         }
     }
 
+    // -------------------------------------------------------------------------
+    // SCOREBOARD OVERLAY (CLIENT VIEW)
+    // -------------------------------------------------------------------------
+
     private void showScoreboard(String payload) {
         MP_ScoreboardOverlayView overlay = new MP_ScoreboardOverlayView(false);
         VBox list = overlay.getPlayerListBox();
@@ -255,13 +264,13 @@ public class MP_ClientGameController {
                 continue;
             }
 
-            String[] parts = entry.split(":");
-            if (parts.length < 4) continue;
+            String[] parts2 = entry.split(":");
+            if (parts2.length < 4) continue;
 
-            String name = parts[0];
-            String alive = parts[1];
-            String correct = parts[2];
-            String moneyStr = parts[3];
+            String name = parts2[0];
+            String alive = parts2[1];
+            String correct = parts2[2];
+            String moneyStr = parts2[3];
 
             int money = 0;
             try {
@@ -278,6 +287,7 @@ public class MP_ClientGameController {
             list.getChildren().add(lbl);
         }
 
+        // Update top name cards and ladder pips
         mpView.updatePlayerNameCards(mpView.getPlayerList().getItems(), totals);
         mpView.updateLadderMarkers(tierHits);
 
@@ -301,6 +311,10 @@ public class MP_ClientGameController {
 
         mpView.getChildren().add(overlay);
     }
+
+    // -------------------------------------------------------------------------
+    // SETTINGS MENU
+    // -------------------------------------------------------------------------
 
     private void showSettingsMenu() {
         ContextMenu settingsMenu = new ContextMenu();
