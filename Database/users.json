@@ -12,7 +12,11 @@
   "superpositionUsed" : false,
   "entanglementUsed" : false,
   "interferenceUsed" : false,
-  "totalLifelinesUsed" : 5
+  "totalLifelinesUsed" : 5,
+  "mpGamesPlayed" : 1,
+  "mpGamesWon" : 1,
+  "mpGamesLost" : 0,
+  "mpMoneyEarned" : 300
 }, {
   "username" : "efsdfssdc",
   "passwordHash" : null,
@@ -27,7 +31,11 @@
   "superpositionUsed" : false,
   "entanglementUsed" : false,
   "interferenceUsed" : false,
-  "totalLifelinesUsed" : 1
+  "totalLifelinesUsed" : 1,
+  "mpGamesPlayed" : 0,
+  "mpGamesWon" : 0,
+  "mpGamesLost" : 0,
+  "mpMoneyEarned" : 0
 }, {
   "username" : "Yogi",
   "passwordHash" : null,
@@ -42,7 +50,11 @@
   "superpositionUsed" : false,
   "entanglementUsed" : false,
   "interferenceUsed" : false,
-  "totalLifelinesUsed" : 0
+  "totalLifelinesUsed" : 0,
+  "mpGamesPlayed" : 0,
+  "mpGamesWon" : 0,
+  "mpGamesLost" : 0,
+  "mpMoneyEarned" : 0
 }, {
   "username" : "hobor",
   "passwordHash" : null,
@@ -57,5 +69,9 @@
   "superpositionUsed" : false,
   "entanglementUsed" : false,
   "interferenceUsed" : false,
-  "totalLifelinesUsed" : 0
+  "totalLifelinesUsed" : 0,
+  "mpGamesPlayed" : 1,
+  "mpGamesWon" : 0,
+  "mpGamesLost" : 1,
+  "mpMoneyEarned" : 0
 } ]

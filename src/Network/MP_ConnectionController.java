@@ -10,6 +10,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import Pack_1.profile.Session;
+import Pack_1.profile.UserManager;
+
 /**
  * Handles hosting/joining a multiplayer session and transitioning
  * into the multiplayer game view (MP_QView).
@@ -46,9 +49,15 @@ public class MP_ConnectionController {
      */
     private final Set<String> knownPlayers = new LinkedHashSet<>();
 
+    // Profile / session wiring for multiplayer stats
+    private final UserManager userManager;
+    private final Session session;
+
     public MP_ConnectionController(MP_ConnectionView view,
                                    String localPlayerName,
-                                   Stage primaryStage) {
+                                   Stage primaryStage,
+                                   UserManager userManager,
+                                   Session session) {
 
         this.view = view;
         this.primaryStage = primaryStage;
@@ -56,6 +65,9 @@ public class MP_ConnectionController {
                 (localPlayerName == null || localPlayerName.isBlank())
                         ? "Player"
                         : localPlayerName;
+
+        this.userManager = userManager;
+        this.session = session;
 
         // Local player is always known
         knownPlayers.add(this.localPlayerName);
@@ -157,6 +169,26 @@ public class MP_ConnectionController {
     }
 
     // -------------------------------------------------------------------------
+    // RETURN TO NETWORK SETUP
+    // -------------------------------------------------------------------------
+
+    /**
+     * Returns to the original Network Setup screen (MP_ConnectionView).
+     * Used after multiplayer match ends.
+     */
+    private void returnToNetworkSetup() {
+        Platform.runLater(() -> {
+            Scene scene = new Scene(view, 1280, 720);
+            try {
+                String css = getClass().getResource("/Pack_1/style.css").toExternalForm();
+                scene.getStylesheets().add(css);
+            } catch (Exception ignored) {}
+            primaryStage.setScene(scene);
+            primaryStage.centerOnScreen();
+        });
+    }
+
+    // -------------------------------------------------------------------------
     // GAME VIEW
     // -------------------------------------------------------------------------
 
@@ -203,6 +235,9 @@ public class MP_ConnectionController {
             // Snapshot of players at game start
             List<String> initialPlayers = knownPlayers.stream().collect(Collectors.toList());
 
+            // Callback to return to Network Setup after match ends
+            Runnable returnToNetwork = this::returnToNetworkSetup;
+
             // Create appropriate controller
             if (isHost) {
                 hostGameController = new MP_HostGameController(
@@ -210,7 +245,10 @@ public class MP_ConnectionController {
                         server,
                         client,
                         localPlayerName,
-                        initialPlayers
+                        initialPlayers,
+                        userManager,
+                        session,
+                        returnToNetwork
                 );
 
                 gameView.getSuperpositionBtn().setOnAction(e ->
@@ -227,7 +265,8 @@ public class MP_ConnectionController {
                 clientGameController = new MP_ClientGameController(
                         gameView,
                         client,
-                        localPlayerName
+                        localPlayerName,
+                        returnToNetwork
                 );
 
                 gameView.getSuperpositionBtn().setOnAction(e ->

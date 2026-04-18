@@ -414,8 +414,14 @@ public class QMillionaireMVC extends Application {
         // Get the real profile name from the active session
         String playerName = session.getCurrentUser().getUsername();
 
-        // Create the controller (patched version requires Stage)
-        new Network.MP_ConnectionController(view, playerName, primaryStage);
+        // ⭐ FIXED: Pass UserManager + Session to the new constructor
+        new Network.MP_ConnectionController(
+                view,
+                playerName,
+                primaryStage,
+                userManager,
+                session
+        );
 
         // Back button returns to mode selection
         view.getBackBtn().setOnAction(e -> showModeSelection(primaryStage));
@@ -428,8 +434,6 @@ public class QMillionaireMVC extends Application {
     }
 
 
-
-    
     
     public static void main(String[] args) {
         launch(args);

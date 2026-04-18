@@ -20,6 +20,9 @@ import javafx.util.Duration;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+import Pack_1.profile.Session;
+import Pack_1.profile.UserManager;
+
 /**
  * Host-side multiplayer game controller.
  * - Owns a QModel and drives the question/timer loop.
@@ -30,8 +33,8 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class MP_HostGameController {
 
-    private static final int QUESTION_TIME = 40;
-    private static final int SCOREBOARD_TIME = 30;
+    private static final int QUESTION_TIME = 5;
+    private static final int SCOREBOARD_TIME = 1;
 
     private final MP_QView mpView;
     private final MP_Server server;
@@ -63,16 +66,30 @@ public class MP_HostGameController {
     // For each tier index (0-based), which players got it correct
     private final Map<Integer, List<String>> tierHits = new HashMap<>();
 
+    // Profile / session for MP stats
+    private final UserManager userManager;
+    private final Session session;
+
+    // Callback to return to Network Setup after match ends
+    private final Runnable returnToNetworkSetup;
+
     public MP_HostGameController(MP_QView mpView,
                                  MP_Server server,
                                  MP_Client client,
                                  String hostName,
-                                 List<String> initialPlayers) {
+                                 List<String> initialPlayers,
+                                 UserManager userManager,
+                                 Session session,
+                                 Runnable returnToNetworkSetup) {
 
         this.mpView = mpView;
         this.server = server;
         this.client = client;
         this.hostName = (hostName == null || hostName.isBlank()) ? "Host" : hostName;
+
+        this.userManager = userManager;
+        this.session = session;
+        this.returnToNetworkSetup = returnToNetworkSetup;
 
         // Menu diamond
         mpView.getMenuDiamond().setOnAction(e -> showSettingsMenu());
@@ -435,14 +452,45 @@ public class MP_HostGameController {
     // GAME OVER & SCOREBOARD
     // -------------------------------------------------------------------------
 
+    /**
+     * Finalizes the multiplayer game:
+     * - Stops timers
+     * - Determines winner(s) by highest total earnings
+     * - Records multiplayer stats for all users
+     * - Broadcasts WIN to all clients
+     * - Returns to Network Setup after ~20 seconds
+     */
     private void handleGameOver() {
         if (timer != null) {
             timer.stop();
         }
+        if (scoreboardTimer != null) {
+            scoreboardTimer.stop();
+            scoreboardTimer = null;
+        }
+
+        // Determine highest earner
+        int max = 0;
+        for (int v : playerEarnings.values()) {
+            if (v > max) max = v;
+        }
 
         List<String> winners = new ArrayList<>();
-        for (var e : playerStatus.entrySet()) {
-            if (e.getValue()) winners.add(e.getKey());
+        for (var e : playerEarnings.entrySet()) {
+            if (e.getValue() == max) {
+                winners.add(e.getKey());
+            }
+        }
+
+        // Save stats for every player
+        for (var entry : playerEarnings.entrySet()) {
+            String player = entry.getKey();
+            int money = entry.getValue();
+            boolean won = winners.contains(player);
+
+            userManager.findUser(player).ifPresent(u -> {
+                userManager.recordMultiplayerResult(u, won, money);
+            });
         }
 
         String payload = String.join(",", winners);
@@ -454,6 +502,15 @@ public class MP_HostGameController {
         ));
 
         mpView.appendChat("*** Game Over — Winner(s): " + payload + " ***");
+
+        // Return to Network Setup after ~20 seconds
+        Timeline exitTimer = new Timeline(new KeyFrame(Duration.seconds(20), e -> {
+            if (returnToNetworkSetup != null) {
+                returnToNetworkSetup.run();
+            }
+        }));
+        exitTimer.setCycleCount(1);
+        exitTimer.play();
     }
 
     private void showScoreboard(Map<String, Boolean> correctness) {
@@ -514,8 +571,14 @@ public class MP_HostGameController {
             if (scoreboardSecondsRemaining <= 0 || allClicked) {
                 scoreboardTimer.stop();
                 mpView.getChildren().remove(overlay);
+
+                // Advance the underlying model and decide whether to end or continue
                 model.nextQuestion();
-                Platform.runLater(this::startNewQuestion);
+                if (model.isGameOver() || model.getCurrentQuestion() == null) {
+                    Platform.runLater(this::handleGameOver);
+                } else {
+                    Platform.runLater(this::startNewQuestion);
+                }
             }
 
         }));

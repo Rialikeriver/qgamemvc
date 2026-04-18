@@ -9,6 +9,9 @@ import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.layout.VBox;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.util.Duration;
 
 import java.util.*;
 
@@ -27,14 +30,20 @@ public class MP_ClientGameController {
 
     private boolean hasAnsweredCurrentQuestion = false;
 
+    // Callback to return to Network Setup after match ends
+    private final Runnable returnToNetworkSetup;
+
     public MP_ClientGameController(MP_QView mpView,
                                    MP_Client client,
-                                   String playerName) {
+                                   String playerName,
+                                   Runnable returnToNetworkSetup) {
         this.mpView = mpView;
         this.client = client;
         this.playerName = (playerName == null || playerName.isBlank())
                 ? "Player"
                 : playerName;
+
+        this.returnToNetworkSetup = returnToNetworkSetup;
 
         mpView.getMenuDiamond().setOnAction(e -> showSettingsMenu());
 
@@ -193,6 +202,37 @@ public class MP_ClientGameController {
 
     private void handleWin(String payload) {
         mpView.appendChat("*** Game over: " + payload + " ***");
+
+        // Simple end-of-game overlay showing winners
+        MP_ScoreboardOverlayView overlay = new MP_ScoreboardOverlayView(false);
+        VBox list = overlay.getPlayerListBox();
+
+        String winnersText = (payload == null || payload.isBlank())
+                ? "No winners"
+                : "Winner(s): " + payload;
+
+        Label lbl = new Label(winnersText);
+        lbl.setStyle(
+            "-fx-text-fill: #d4af37;" +
+            "-fx-font-size: 22px;"
+        );
+        list.getChildren().add(lbl);
+
+        overlay.getCountdownLabel().setText("Match complete");
+
+        overlay.getContinueBtn().setDisable(true);
+
+        mpView.getChildren().add(overlay);
+        currentOverlay = overlay;
+
+        // Return to Network Setup after ~20 seconds
+        Timeline exitTimer = new Timeline(new KeyFrame(Duration.seconds(20), e -> {
+            if (returnToNetworkSetup != null) {
+                returnToNetworkSetup.run();
+            }
+        }));
+        exitTimer.setCycleCount(1);
+        exitTimer.play();
     }
 
     private void handleLifeline(String payload) {
