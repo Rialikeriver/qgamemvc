@@ -39,7 +39,7 @@ public class MP_HostGameController {
 	private final MP_QView mpView;
 	private final MP_Server server;
 	private final MP_Client client;
-	private final String hostNamed;
+	private final String hostName;
 
 	private final QModel model;
 	private Timeline timer;
