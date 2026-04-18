@@ -67,6 +67,22 @@
     -fx-text-fill: black;
 }
 
+.answer-selected {
+    -fx-background-color: linear-gradient(
+        to bottom,
+        rgba(0, 200, 220, 1) 10%,      /* bright teal top */
+        rgba(0, 140, 160, 1) 65%,     /* mid-tone teal */
+        rgba(0, 110, 130, 1) 100%     /* darker teal base */
+    );
+    -fx-text-fill: white;
+    -fx-border-color: #d4af37;
+    -fx-border-width: 3;
+    -fx-background-radius: 30;
+    -fx-font-weight: bold;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.6), 12, 0.3, 0, 0);
+}
+
+
 /* --- COUNTDOWN TIMER --- */
 .timer-base {
     -fx-font-size: 80px;
@@ -123,6 +139,17 @@
     -fx-text-fill: black;
 }
 
+.theme-deuteranopia .answer-selected {
+    -fx-background-color: linear-gradient(
+        to bottom,
+        #ffdd00 0%,
+        #e6c700 60%,
+        #bfa600 100%
+    );
+    -fx-text-fill: black;
+    -fx-border-color: #005ab5;
+}
+
 .theme-deuteranopia #current-level {
     -fx-background-color: #ffdd00;
     -fx-text-fill: black;
@@ -140,6 +167,17 @@
 .theme-tritanopia .answer-btn:hover {
     -fx-background-color: #ffb6c1;
     -fx-text-fill: black;
+}
+
+.theme-tritanopia .answer-selected {
+    -fx-background-color: linear-gradient(
+        to bottom,
+        #ffb6c1 0%,
+        #ff9fb0 60%,
+        #ff7a94 100%
+    );
+    -fx-text-fill: black;
+    -fx-border-color: #007777;
 }
 
 .theme-tritanopia #current-level {
