@@ -351,15 +351,11 @@ public class MP_ClientGameController {
         mpView.getChildren().add(overlay);
     }
 
-    // -------------------------------------------------------------------------
-    // SETTINGS MENU
-    // -------------------------------------------------------------------------
-
     private void showSettingsMenu() {
         ContextMenu settingsMenu = new ContextMenu();
 
+        // --- Theme Menu ---
         Menu themeMenu = new Menu("Themes & Accessibility");
-
         MenuItem modern = new MenuItem("Modern Style");
         MenuItem classic = new MenuItem("Classic Style");
         MenuItem deuteranopia = new MenuItem("Deuteranopia (Red-Green)");
@@ -378,8 +374,32 @@ public class MP_ClientGameController {
         deuteranopia.setOnAction(e -> mpView.applyTheme("theme-deuteranopia"));
         tritanopia.setOnAction(e -> mpView.applyTheme("theme-tritanopia"));
 
-        settingsMenu.getItems().add(themeMenu);
+        // --- Language Menu (Globalization) ---
+        // We use a Menu object so it creates a sub-menu like Themes
+        Menu langMenu = new Menu("Language / زبان");
+        MenuItem english = new MenuItem("English");
+        MenuItem farsi = new MenuItem("فارسی (Farsi)");
 
+        langMenu.getItems().addAll(english, farsi);
+
+        english.setOnAction(e -> {
+            try {
+                ResourceBundle bundle = ResourceBundle.getBundle("messages", Locale.ENGLISH);
+                mpView.retranslate(bundle);
+            } catch (Exception ex) { System.err.println("Could not find English bundle: " + ex.getMessage()); }
+        });
+
+        farsi.setOnAction(e -> {
+            try {
+                ResourceBundle bundle = ResourceBundle.getBundle("messages", new Locale("fa", "IR"));
+                mpView.retranslate(bundle);
+            } catch (Exception ex) { System.err.println("Could not find Farsi bundle: " + ex.getMessage()); }
+        });
+
+        // CRITICAL: Ensure both menus are added to the main settingsMenu
+        settingsMenu.getItems().addAll(themeMenu, langMenu);
+
+        // Show it relative to the diamond button
         settingsMenu.show(mpView.getMenuDiamond(), Side.BOTTOM, 0, 0);
     }
 }

@@ -15,6 +15,7 @@ import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.layout.VBox;
+import javafx.geometry.NodeOrientation;
 import javafx.util.Duration;
 
 import java.util.*;
@@ -608,30 +609,62 @@ public class MP_HostGameController {
 	// -------------------------------------------------------------------------
 
 	private void showSettingsMenu() {
-		ContextMenu settingsMenu = new ContextMenu();
+	    ContextMenu settingsMenu = new ContextMenu();
 
-		Menu themeMenu = new Menu("Themes & Accessibility");
+	    // --- Theme Menu ---
+	    Menu themeMenu = new Menu("Themes & Accessibility");
+	    MenuItem modern = new MenuItem("Modern Style");
+	    MenuItem classic = new MenuItem("Classic Style");
+	    MenuItem deuteranopia = new MenuItem("Deuteranopia (Red-Green)");
+	    MenuItem tritanopia = new MenuItem("Tritanopia (Blue-Yellow)");
 
-		MenuItem modern = new MenuItem("Modern Style");
-		MenuItem classic = new MenuItem("Classic Style");
-		MenuItem deuteranopia = new MenuItem("Deuteranopia (Red-Green)");
-		MenuItem tritanopia = new MenuItem("Tritanopia (Blue-Yellow)");
+	    themeMenu.getItems().addAll(modern, classic, new SeparatorMenuItem(), deuteranopia, tritanopia);
 
-		themeMenu.getItems().addAll(
-				modern,
-				classic,
-				new SeparatorMenuItem(),
-				deuteranopia,
-				tritanopia
-				);
+	    modern.setOnAction(e -> mpView.applyTheme("modern-style"));
+	    classic.setOnAction(e -> mpView.applyTheme("classic-style"));
+	    deuteranopia.setOnAction(e -> mpView.applyTheme("theme-deuteranopia"));
+	    tritanopia.setOnAction(e -> mpView.applyTheme("theme-tritanopia"));
 
-		modern.setOnAction(e -> mpView.applyTheme("modern-style"));
-		classic.setOnAction(e -> mpView.applyTheme("classic-style"));
-		deuteranopia.setOnAction(e -> mpView.applyTheme("theme-deuteranopia"));
-		tritanopia.setOnAction(e -> mpView.applyTheme("theme-tritanopia"));
+	    // --- Language Menu (The missing piece!) ---
+	    Menu langMenu = new Menu("Language / زبان");
+	    MenuItem enItem = new MenuItem("English");
+	    MenuItem faItem = new MenuItem("Persian (فارسی)");
 
-		settingsMenu.getItems().add(themeMenu);
+	    langMenu.getItems().addAll(enItem, faItem);
 
-		settingsMenu.show(mpView.getMenuDiamond(), Side.BOTTOM, 0, 0);
+	    faItem.setOnAction(e -> {
+	        // 1. Load the Farsi File
+	        List<Question> farsi = QuestionLoader.loadQuestions("BeMillionaireQuestionsfa.json");
+	        if (farsi != null && !farsi.isEmpty()) {
+	            // 2. Update the Model
+	            model.setQuestions(farsi);
+	            model.resetGame();
+	            
+	            // 3. Update the Host's View orientation
+	            mpView.setNodeOrientation(NodeOrientation.RIGHT_TO_LEFT);
+	            
+	            // 4. Start the game over with the new language
+	            startNewQuestion(); 
+	            
+	            // 5. Notify the Chat
+	            mpView.appendChat("Language changed to Persian. Restarting game...");
+	        }
+	    });
+
+	    enItem.setOnAction(e -> {
+	        List<Question> english = QuestionLoader.loadQuestions("BeMillionaireQuestions.json");
+	        if (english != null && !english.isEmpty()) {
+	            model.setQuestions(english);
+	            model.resetGame();
+	            mpView.setNodeOrientation(NodeOrientation.LEFT_TO_RIGHT);
+	            startNewQuestion();
+	            mpView.appendChat("Language changed to English. Restarting game...");
+	        }
+	    });
+
+	    // Add both to the main context menu
+	    settingsMenu.getItems().addAll(themeMenu, langMenu);
+
+	    settingsMenu.show(mpView.getMenuDiamond(), Side.BOTTOM, 0, 0);
 	}
 }
